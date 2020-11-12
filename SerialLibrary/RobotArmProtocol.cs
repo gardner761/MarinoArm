@@ -21,8 +21,8 @@ namespace SerialLibrary
     public class RobotArmProtocol
     {
         #region Defines
-        //public delegate void StateChangedEvent(string message);
-        //public event StateChangedEvent stateChangedEvent;
+        public delegate void StateChangedEvent(string message);
+        public event StateChangedEvent stateChangedEvent;
         public delegate void UpdatedDataEvent(List<Point> data);
         public event UpdatedDataEvent updatedDataEvent;
         public delegate void ReferenceDataEvent(List<Point> data);
