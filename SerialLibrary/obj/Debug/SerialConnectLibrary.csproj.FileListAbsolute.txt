@@ -1,0 +1,5 @@
+C:\Users\gardn\source\repos\SmartBOM\SerialConnectLibrary\bin\Debug\SerialConnectLibrary.dll
+C:\Users\gardn\source\repos\SmartBOM\SerialConnectLibrary\bin\Debug\SerialConnectLibrary.pdb
+C:\Users\gardn\source\repos\SmartBOM\SerialConnectLibrary\obj\Debug\SerialConnectLibrary.dll
+C:\Users\gardn\source\repos\SmartBOM\SerialConnectLibrary\obj\Debug\SerialConnectLibrary.pdb
+C:\Users\gardn\source\repos\SmartBOM\SerialConnectLibrary\obj\Debug\SerialConnectLibrary.csprojAssemblyReference.cache

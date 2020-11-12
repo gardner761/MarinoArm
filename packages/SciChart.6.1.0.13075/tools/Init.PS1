@@ -1,0 +1,1 @@
+start https://www.scichart.com/getting-started-scichart-wpf?utm_source=nuget.org

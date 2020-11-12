@@ -1,0 +1,34 @@
+{
+  "version": 2,
+  "dgSpecHash": "fk2qjMpm1Ztg5xAaySKKF4qeadUIPNq7IPiYNpptLqXlU/ok93H/EQaGvJ/LqQ5Sp2QrzbAfndUg53IbJUB34Q==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\gardn\\source\\repos\\MarinoArm\\RobotArmLibrary\\RobotArmLibrary.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\gardn\\.nuget\\packages\\dynamiclanguageruntime\\1.2.2\\dynamiclanguageruntime.1.2.2.nupkg.sha512",
+    "C:\\Users\\gardn\\.nuget\\packages\\ironpython\\2.7.9\\ironpython.2.7.9.nupkg.sha512",
+    "C:\\Users\\gardn\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\gardn\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'DynamicLanguageRuntime 1.2.2' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8' instead of the project target framework '.NETStandard,Version=v2.0'. This package may not be fully compatible with your project.",
+      "libraryId": "DynamicLanguageRuntime",
+      "targetGraphs": [
+        ".NETStandard,Version=v2.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'IronPython 2.7.9' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8' instead of the project target framework '.NETStandard,Version=v2.0'. This package may not be fully compatible with your project.",
+      "libraryId": "IronPython",
+      "targetGraphs": [
+        ".NETStandard,Version=v2.0"
+      ]
+    }
+  ]
+}
