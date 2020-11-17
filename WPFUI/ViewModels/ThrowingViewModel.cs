@@ -23,7 +23,7 @@ namespace WPFUI.ViewModels
         private PlotModel plotModel;
         private int refreshPlotCount = 3; //amount of trials to run until the plot is refreshed
         private PlotModel cmdPlotModel;
-        SerialClient serialClient;
+        
         bool isBuiltNewLine;
         public enum LineType
         {
@@ -34,9 +34,10 @@ namespace WPFUI.ViewModels
             ShoulderCmd,
             ElbowCmd
         }
-  
 
-        #endregion  
+        RobotArmProtocol robotArmProtocol;
+
+        #endregion
 
         #region Constructors
         public ThrowingViewModel()
@@ -56,16 +57,15 @@ namespace WPFUI.ViewModels
             }
         }
 
-        public ThrowingViewModel(SerialClient sc)
+        public ThrowingViewModel(RobotArmProtocol rap)
             : this()
         {
-            serialClient = sc;
-            serialClient.RobotArmProtocol.refreshPlotCount = refreshPlotCount;
-            serialClient.RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
-            serialClient.RobotArmProtocol.updatedDataEvent += RobotArmProtocol_updatedDataEvent;
-            serialClient.RobotArmProtocol.referenceDataEvent += RobotArmProtocol_referenceDataEvent;
-            serialClient.RobotArmProtocol.commandDataEvent += RobotArmProtocol_commandDataEvent;
-            
+            robotArmProtocol = rap;
+            robotArmProtocol.refreshPlotCount = refreshPlotCount;
+            robotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
+            robotArmProtocol.masp.updatedDataEvent += RobotArmProtocol_updatedDataEvent;
+            robotArmProtocol.referenceDataEvent += RobotArmProtocol_referenceDataEvent;
+            robotArmProtocol.commandDataEvent += RobotArmProtocol_commandDataEvent;
         }
 
         #endregion
@@ -73,7 +73,7 @@ namespace WPFUI.ViewModels
         #region Event Handlers
         private void RobotArmProtocol_stateChangedEvent(string message)
         {
-            switch (serialClient.RobotArmProtocol.state)
+            switch (robotArmProtocol.state)
             {
                 case States.OnStartup:
                     break;
@@ -82,6 +82,8 @@ namespace WPFUI.ViewModels
                 case States.Idle:
                     break;
                 case States.TaskPlanning:
+                    break;
+                case States.Calculating:
                     break;
                 case States.Sending:
                     break;
@@ -162,11 +164,11 @@ namespace WPFUI.ViewModels
         {
             get
             {
-                return serialClient.RobotArmProtocol.ThrowCtr;
+                return robotArmProtocol.ThrowCtr;
             }
             set
             {
-                serialClient.RobotArmProtocol.ThrowCtr = value;
+                robotArmProtocol.ThrowCtr = value;
             }
         }
         private Visibility _startButtonVisibility;
@@ -377,8 +379,8 @@ namespace WPFUI.ViewModels
         {
             StartButtonVisibility = Visibility.Hidden;
 
-            serialClient.RobotArmProtocol.ThrowRequested = true;
-            serialClient.RobotArmProtocol.UpdateStateMachine();
+            robotArmProtocol.ThrowRequested = true;
+            //robotArmProtocol.UpdateStateMachine();
             
             isBuiltNewLine = false;
             //ClearPlot();

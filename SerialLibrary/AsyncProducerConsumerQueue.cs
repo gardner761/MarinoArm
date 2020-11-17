@@ -10,6 +10,13 @@ namespace SerialLibrary
         private readonly BlockingCollection<T> m_queue;
         private readonly CancellationTokenSource m_cancelTokenSrc;
 
+        #region Constructors
+
+        /// <summary>
+        /// Instantiates the APCQ and starts the thread to consume/interpret 
+        /// the already-read serial data that was stored in the queue
+        /// </summary>
+        /// <param name="consumer"> the action method to be used to consume the data in the queue</param>
         public AsyncProducerConsumerQueue(Action<T> consumer)
         {
             if (consumer == null)
@@ -23,8 +30,18 @@ namespace SerialLibrary
 
             new Thread(() => ConsumeLoop(m_cancelTokenSrc.Token)).Start();
             Console.WriteLine("Consume Thread Started");
+
+            
         }
 
+        #endregion
+
+        /// <summary>
+        /// Adds incoming value to BlockingCollection queue, from which it will be consumed
+        /// </summary>
+        /// <param name="value">
+        /// value (byte) to be added to the queue
+        /// </param>
         public void Produce(T value)
         {
             m_queue.Add(value);

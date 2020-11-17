@@ -1,48 +1,48 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading;
 using Diagnostics = System.Diagnostics;
 
+
+/// <summary>
+///    This Library Provides Fast & Efficient Serial Communication
+///    Over The Standard C# Serial Component
+/// </summary>
 namespace SerialLibrary
 {
-    /* This AX-Fast Serial Library
-    Developer: Ahmed Mubarak - RoofMan
-
-    This Library Provide The Fastest & Efficient Serial Communication
-    Over The Standard C# Serial Component
-    */
-
-
-
-
     public class SerialClient : IDisposable
     {
         #region Defines
-        private string _port;
-        private int _baudRate;
-        private SerialPort _serialPort;
-        private Thread serThread;
-        private double _PacketsRate;
-        private DateTime _lastReceive;
-        /*The Critical Frequency of Communication to Avoid Any Lag*/
-        private const int freqCriticalLimit = 20;
-        RobotArmProtocol _rap;
 
+        private string portName;
+        private int _baudRate;
+        public SerialPort SerialPort;
+        private Thread readSerialPortThread;
+        private DateTime _lastReceive;
+        public delegate void ConnectionMadeEvent();
+        public event ConnectionMadeEvent connectionMadeEvent;
+        public delegate void AddByteToQueueEvent(byte data);
+        public event AddByteToQueueEvent addByteToQueueEvent;
+
+        /// <summary>
+        /// set this to be true when you want to stop the thread
+        /// </summary>
+        bool stopReadingThreadRequest;
 
         #endregion
 
         #region Constructors
         public SerialClient(string port)
         {
-            _port = port;
+            portName = port;
             _baudRate = 115200;
             _lastReceive = DateTime.MinValue;
-            serThread = new Thread(new ThreadStart(SerialReceiving));
-            serThread.Priority = ThreadPriority.Normal;
-            serThread.Name = "SerialHandle" + serThread.ManagedThreadId;
-            _rap = new RobotArmProtocol();
+
+            // Setup the thread to read the incoming serial data
+            stopReadingThreadRequest = false;
+            readSerialPortThread = new Thread(new ThreadStart(ReadSerialPortAndAddBytesToQueue));
+            readSerialPortThread.Priority = ThreadPriority.Normal;
+            readSerialPortThread.Name = "IncomingSerialReadingThread - ID:" + readSerialPortThread.ManagedThreadId;
 
         }
         public SerialClient(string Port, int baudRate)
@@ -52,24 +52,17 @@ namespace SerialLibrary
         }
         #endregion
 
-        #region Custom Events
-
-        public event EventHandler<DataStreamEventArgs> OnReceiving;
-
-        #endregion
-
         #region Properties
-
 
         public string Port
         {
             get 
             { 
-                return _port; 
+                return portName; 
             }
             private set
             {
-                _port = value;
+                portName = value;
             }
         }
         public int BaudRate
@@ -81,19 +74,7 @@ namespace SerialLibrary
             get
             {
                 return String.Format("[Serial] Port: {0} | Baudrate: {1}",
-                    _serialPort.PortName, _serialPort.BaudRate.ToString());
-            }
-        }
-
-        public RobotArmProtocol RobotArmProtocol
-        {
-            get
-            {
-                return _rap;
-            }
-            set
-            {
-                _rap = value;
+                    SerialPort.PortName, SerialPort.BaudRate.ToString());
             }
         }
 
@@ -106,54 +87,49 @@ namespace SerialLibrary
         {
             try
             {
-                if (_serialPort == null)
-                    _serialPort = new SerialPort(_port, _baudRate, Parity.None);
-
-                if (!_serialPort.IsOpen)
+                if (SerialPort == null)
                 {
-                    _serialPort.ReadTimeout = -1;
-                    _serialPort.WriteTimeout = -1;
+                    SerialPort = new SerialPort(portName, _baudRate, Parity.None);
+                }
 
-                    _serialPort.Open();
-                    if (_rap != null)
+                if (!SerialPort.IsOpen)
+                {
+                    SerialPort.ReadTimeout = -1;
+                    SerialPort.WriteTimeout = -1;
+                    SerialPort.Open();
+                    if (SerialPort.IsOpen)
                     {
-                        _rap.AssignSerialPort(_serialPort);
-                    }
-
-
-                    if (_serialPort.IsOpen)
-                    {
-                        serThread.Start(); /*Start The Communication Thread*/
-
+                        readSerialPortThread = new Thread(new ThreadStart(ReadSerialPortAndAddBytesToQueue));
+                        readSerialPortThread.Start(); /*Start The read serial Thread*/
                     }
                         
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 return false;
             }
 
+            connectionMadeEvent();
             return true;
         }
         public bool OpenConn(string port, int baudRate)
         {
-            _port = port;
+            portName = port;
             _baudRate = baudRate;
 
             return OpenConn();
         }
         public void CloseConn()
         {
-            if (_serialPort != null && _serialPort.IsOpen)
+            if (SerialPort != null && SerialPort.IsOpen)
             {
-                serThread.Abort();
-
-                if (serThread.ThreadState == ThreadState.Aborted)
-                    _serialPort.Close();
+                readSerialPortThread.Abort();
+                while (readSerialPortThread.ThreadState != ThreadState.Aborted){}
+                SerialPort.Close();
             }
 
-            _rap.Dispose();
         }
         public bool ResetConn()
         {
@@ -164,7 +140,7 @@ namespace SerialLibrary
         #region Transmit/Receive
         public void Transmit(byte[] packet)
         {
-            _serialPort.Write(packet, 0, packet.Length);
+            SerialPort.Write(packet, 0, packet.Length);
         }
         public int Receive(byte[] bytes, int offset, int count)
         {
@@ -172,7 +148,7 @@ namespace SerialLibrary
 
             if (count > 0)
             {
-                readBytes = _serialPort.Read(bytes, offset, count);
+                readBytes = SerialPort.Read(bytes, offset, count);
             }
 
             return readBytes;
@@ -183,10 +159,10 @@ namespace SerialLibrary
         {
             CloseConn();
 
-            if (_serialPort != null)
+            if (SerialPort != null)
             {
-                _serialPort.Dispose();
-                _serialPort = null;
+                SerialPort.Dispose();
+                SerialPort = null;
                 Console.WriteLine($"Port {Port} is Closed and Disposed");
                 Port = null;
 
@@ -196,62 +172,41 @@ namespace SerialLibrary
         #endregion
 
         #region Threading Loops
-        private void SerialReceiving()
+
+        /// <summary>
+        /// This method reads incoming serial port bytes and stores them in a queue inside the apcq, 
+        /// it should be used on its own thread. 
+        /// </summary>
+        private void ReadSerialPortAndAddBytesToQueue()
         {
-            while (serThread.ThreadState == ThreadState.Running)
+            // TODO - Stop and start this serial reading thread with RAP
+            while (!stopReadingThreadRequest & readSerialPortThread.ThreadState == ThreadState.Running)
             {
-                
-                int count = _serialPort.BytesToRead;
-
-                /*Get Sleep Interval*/
-                TimeSpan tmpInterval = (DateTime.Now - _lastReceive);
-
-                /*Form The Packet in The Buffer*/
-                byte[] buf = new byte[count];
-                int readBytes = Receive(buf, 0, count);
-
-                if (readBytes > 0)
+                while(addByteToQueueEvent==null)
                 {
-                    OnSerialReceiving(buf);
-                    foreach(byte b in buf)
-                    {
-                        _rap.Produce(b);  
-                    }
+                    //stay here until this is no longer null
                 }
 
-                #region Frequency Control
-                _PacketsRate = ((_PacketsRate + readBytes) / 2);
+                /*Measures Interval Between Cycles*/
+                TimeSpan tmpInterval = (DateTime.Now - _lastReceive);
+
+                /*Read the serial port bytes and send them to the apcq queue via rap*/
+                int count = SerialPort.BytesToRead;
+                if (count > 0)
+                {
+                    byte[] buf = new byte[count];
+                    SerialPort.Read(buf, 0, count);
+                    foreach (byte b in buf)
+                    {
+                        addByteToQueueEvent(b); 
+                    }
+                    //Console.WriteLine($"Buf says: {buf}");
+                }
 
                 _lastReceive = DateTime.Now;
 
-                //Thread.Sleep(1);
-
-                if ((double)(readBytes + _serialPort.BytesToRead) / 2 <= _PacketsRate && false)
-                {
-                    if (tmpInterval.Milliseconds > 0)
-                        Thread.Sleep(tmpInterval.Milliseconds > freqCriticalLimit ? freqCriticalLimit : tmpInterval.Milliseconds);
-
-                    /*Testing Threading Model*/
-                    Diagnostics.Debug.Write(tmpInterval.Milliseconds.ToString());
-                    Diagnostics.Debug.Write(" - ");
-                    Diagnostics.Debug.Write(readBytes.ToString());
-                    Diagnostics.Debug.Write("\r\n");
-                }
-                #endregion
-            }
-
-        }
-        #endregion
-
-        #region Custom Events Invoke Functions
-        private void OnSerialReceiving(byte[] res)
-        {
-            if (OnReceiving != null)
-            {
-                OnReceiving(this, new DataStreamEventArgs(res));
             }
         }
         #endregion
     }
-
 }

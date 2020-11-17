@@ -17,59 +17,58 @@ using static ArmLibrary.GlobalVariables;
 
 namespace SerialLibrary
 {
-    //
+    // TODO - Make python scripting async
+
     public class RobotArmProtocol
     {
         #region Defines
+
         public delegate void StateChangedEvent(string message);
         public event StateChangedEvent stateChangedEvent;
-        public delegate void UpdatedDataEvent(List<Point> data);
-        public event UpdatedDataEvent updatedDataEvent;
+
         public delegate void ReferenceDataEvent(List<Point> data);
         public event ReferenceDataEvent referenceDataEvent;
         public delegate void CommandDataEvent(List<Point> data);
         public event CommandDataEvent commandDataEvent;
+
+        public MarinoArmSerialProcessor masp;
+        private String portName;
+        
         private string inString;
-        private bool showDiag=true;
+        private const bool showDiag=true;
+
+        public bool CalculateNewThrowRequested { get; set; }
+
+        bool isStarted;
         bool isConnected;
         public int refreshPlotCount;
-        bool isStarted, isFinished;
-        bool isHelloReceived;
-        string _checkString;
-        List<int> _shoulderSensorData;
+
         Stopwatch stopWatch;
-        SerialPort _port;
-        AsyncProducerConsumerQueue<byte> _apcq;
+        AsyncProducerConsumerQueue<byte> apcq;
         public States state; 
-        int iChunk;
-        int updateChunkSize = 10;
-        int _throwCtr;
-        static double throwDuration_sec = 2.0;
+ 
+        private static double throwDuration_sec = 2.0;
         static int arraySize=(int)((double)GlobalVariables.SAMPLING_FREQUENCY*throwDuration_sec) + 1; //1100 is close to the max for Unos, not sure about Megas
         int timeStep_ms = 1000 / GlobalVariables.SAMPLING_FREQUENCY;
         private ThrowData throwData;
         
         bool startingWithSavedPythonFile = false;
         System.Timers.Timer timer;
-   
 
         #endregion
 
         #region Properties
 
+        private int throwCtr;
         public int ThrowCtr
         {
-            get { return _throwCtr; }
-            set { _throwCtr = value; }
+            get { return throwCtr; }
+            set { throwCtr = value; }
         }
 
-        public bool ThrowRequested;
+        public bool ThrowRequested { get; set; }
 
-        public List<int> ShoulderSensorData
-        {
-            get { return _shoulderSensorData; }
-            //set {_shoulderSensorData = value;}
-        }
+        public SerialClient SerialClient { get; set; }
 
         #endregion
 
@@ -91,17 +90,24 @@ namespace SerialLibrary
 
         #region Constructors
 
-        public RobotArmProtocol()
+        public RobotArmProtocol(String portName)
         {
+            // Stores the port name to be used
+            this.portName = portName;
+            SerialClient = new SerialClient(portName);
+            SerialClient.connectionMadeEvent += SerialClient_ConnectionMadeEvent;
+
+            // Initializes the begging state of the state machine
             state = States.OnStartup;
         }
- 
+
         #endregion
 
         #region State Machine
         private void ChangeStateTo(States nextstate)
         {
             state = nextstate;
+            _stepNumber = 0;
             string message = state.ToString();
             Console.WriteLine($"RAP State is: {message}");
             if (stateChangedEvent != null)
@@ -112,125 +118,172 @@ namespace SerialLibrary
 
         void timer_Tick(object sender, EventArgs e)
         {
-            UpdateStateMachine();
-            Console.WriteLine("Timer Elapsed");
+            if (!isCurrentlyScanning)
+            {
+                UpdateStateMachine();
+            }
+            //Console.WriteLine("Timer Elapsed");
         }
+
+        public void SerialClient_ConnectionMadeEvent()
+        {
+            //Starts the periodic clock to execute the UpdateStateMachine method
+            timer = new System.Timers.Timer(200); //1000 msec
+            timer.Elapsed += timer_Tick;
+            timer.Start();
+        }
+
+        bool isCurrentlyScanning = false;
+        int _stepNumber = 0;
 
         public void UpdateStateMachine()
         {
-            if(timer == null)
-            {
-                timer = new System.Timers.Timer(1000);
-                timer.Elapsed += timer_Tick;
-                //timer.Start();
-            }
+            isCurrentlyScanning = true;
+
             switch (state)
             {
                 case States.OnStartup:
                     {
-                        if (_apcq == null)
+                        if (SerialClient.SerialPort.IsOpen)
                         {
-                            _apcq = new AsyncProducerConsumerQueue<byte>(ListenAndEchoHello);
+                            // Instantiate masp and the apcq
+                            masp = new MarinoArmSerialProcessor(SerialClient.SerialPort, arraySize, timeStep_ms);
+                            masp.wordDetectedEvent += UpdateStateMachine;
+                            masp.CheckString = "HELLO";
+                            masp.IsDetected = false;
+                            apcq = new AsyncProducerConsumerQueue<byte>(masp.ListenAndCheck);
+                            SerialClient.addByteToQueueEvent += apcq.Produce;
+
+                            // Initialize data and write the first throw json
+                            ThrowCtr = 0;
+                            throwData = new ThrowData();
+                            throwData.WriteFirstThrowDataToJson(writeToJsonFilePath); //Initialize ThrowData
+                            Console.WriteLine("Initializing First Throw Json File");
+                            masp.SendMessageToArdy("HELLO");
+                            ChangeStateTo(States.Initialized);
                         }
-                        ThrowCtr = 0;
-                        throwData = new ThrowData();
-                        throwData.WriteFirstThrowDataToJson(writeToJsonFilePath); //Initialize ThrowData
-                        Console.WriteLine("Initializing First Throw Json File");
-                       
-                        ChangeStateTo(States.Initialized);
+
                         break;
                     }
                 case States.Initialized:
                     {
-                        if (isHelloReceived)
+                        //Wait to receive Hello from Arduino, then send arraySize to arduino
+                        if (masp.IsHelloReceived & _stepNumber == 0)
                         {
-                            SendMessageToArdy(arraySize.ToString());
-                            _apcq.SwitchConsumerActionTo(ListenAndCheck);
+                            masp.IsHelloReceived = false;
+                            masp.IsDetected = false;
+                            masp.SendMessageToArdy(arraySize.ToString());
+                            masp.CheckString = arraySize.ToString();
+                            apcq.SwitchConsumerActionTo(masp.ListenAndCheck);
                             ThrowRequested = false;
+                            _stepNumber = 1;
+                        }
+
+                        //Wait to receive echo of arraySize from Arduino
+                        if (masp.IsDetected & _stepNumber==1)
+                        {
+                            masp.IsDetected = false;
+                            _stepNumber = 0;
                             ChangeStateTo(States.Idle);
                         }
+
                         break;
                     }
                 case States.Idle:
                     {
                         if (ThrowRequested)
                         {
-                            ChangeStateTo(States.Calculating);
-                            //UpdateStateMachine();
+                            ThrowCtr++;
+                            CalculateNewThrowRequested = true;
+                            ChangeStateTo(States.TaskPlanning);
                         }
 
                         break;
                     }
+                case States.TaskPlanning:
+                    {
+                        if (CalculateNewThrowRequested)
+                        {
+                            ChangeStateTo(States.Calculating);
+                        }
 
+                        break;
+                    }
                 case States.Calculating:
                     {
-                        
-                            ThrowCtr++;
-                            _checkString = "START"; //this use to be after SwitchConsumerActionTO(listenAndCheck)
-                            _apcq.SwitchConsumerActionTo(ListenAndCheck);
-                            bool pythonExecutedSuccessfully = false;
+                        bool pythonExecutedSuccessfully = false;
                             
-                            if (ThrowCtr == 1 & startingWithSavedPythonFile)
-                            {
+                        if (ThrowCtr == 1 & startingWithSavedPythonFile)
+                        {
 
-                            }
-                            else
+                        }
+                        else
+                        {
+                            startingWithSavedPythonFile = false;
+                            pythonExecutedSuccessfully = ExecutePythonNewThrowCalculation();
+                        }
+                        if (pythonExecutedSuccessfully || startingWithSavedPythonFile)
+                        {
+                            if (ThrowCtr == 1 || ThrowCtr % refreshPlotCount == 1) //if this is the first throw, then want to read the ref signal and have it plotted
                             {
-                                startingWithSavedPythonFile = false;
-                                pythonExecutedSuccessfully = ExecutePythonNewThrowCalculation();
+                                LoadReferenceDataFromJson();
                             }
-                            if (pythonExecutedSuccessfully || startingWithSavedPythonFile)
+                            throwData = LoadCommandDataFromJson();
+                            if(startingWithSavedPythonFile)
                             {
-                                if (ThrowCtr == 1 || ThrowCtr % refreshPlotCount == 1) //if this is the first throw, then want to read the ref signal and have it plotted
-                                {
-                                    LoadReferenceDataFromJson();
-                                }
-                                throwData = LoadCommandDataFromJson();
-                                if(startingWithSavedPythonFile)
-                                {
-                                    throwData.Data.TrialNumber = ThrowCtr;
-                                }
+                                throwData.Data.TrialNumber = ThrowCtr;
+                            }
  
-                                if (throwData.Data.TrialNumber != ThrowCtr )
-                                {
-                                    Console.WriteLine($"!!!!!!!!!!Big error in code: mismatch between internal throw counter and python counter: {ThrowCtr} to {throwData.Data.TrialNumber}");
-                                    ChangeStateTo(States.Error);
-                                }
-
-                                SendNewThrowDataToArdy(throwData);
-
-                                isStarted = false;
-                                ChangeStateTo(States.Starting);
-                            }
-                            else //Python did not execute successfully
+                            if (throwData.Data.TrialNumber != ThrowCtr )
                             {
-                                Console.WriteLine("Python did not execute successfully, debugging needed");
+                                Console.WriteLine($"!!!!!!!!!!Big error in code: mismatch between internal throw counter and python counter: {ThrowCtr} to {throwData.Data.TrialNumber}");
                                 ChangeStateTo(States.Error);
                             }
+
+
+                            ChangeStateTo(States.Starting);
+                        }
+                        else //Python did not execute successfully
+                        {
+                            Console.WriteLine("Python did not execute successfully, debugging needed");
+                            ChangeStateTo(States.Error);
+                           
+                        }
                         
-                        //showDiag = true;
                         break;
                     }
                 case States.Starting:
                     {
-                        if (isStarted)
+
+                        if (_stepNumber == 0) //Send throwData to arduino
                         {
-                            _shoulderSensorData = new List<int>();
-                            _checkString = "END";
-                            _shoulderSensorData.Clear();
-                            _apcq.SwitchConsumerActionTo(AddByteToList);
-                            isFinished = false;
+                            masp.CheckString = "START";
+                            masp.IsDetected = false;
+                            apcq.SwitchConsumerActionTo(masp.ListenAndCheck);
+                            masp.SendNewThrowDataToArdy(throwData);
+                            _stepNumber = 10;
+                        }
+
+                        if (_stepNumber == 10 & masp.IsDetected) //Wait for Arduino to reply with "START", then start adding new data to Byte list
+                        {
+                            masp.ShoulderSensorData.Clear();
+                            masp.IsDetected = false;
+                            masp.CheckString = "END";
+                            apcq.SwitchConsumerActionTo(masp.AddByteToList);
+                            _stepNumber = 0;
                             ChangeStateTo(States.Receiving);
                         }
+
                         break;
                     }
-                case States.Receiving:
+                case States.Receiving: //Reading Data from Arduino
                     {
-                        if (isFinished)
+                        if (masp.IsFinished) //Waiting to read the word "END" from Arduino
                         {
-                            _apcq.SwitchConsumerActionTo(Listen);
-                            throwData.Data.Shoulder.Sensor = _shoulderSensorData.ToArray();
-                            //state = States.Done;
+                            masp.SendMessageToArdy("RECEIVED");
+                            masp.IsFinished = false;
+                            apcq.SwitchConsumerActionTo(masp.Listen);
+                            throwData.Data.Shoulder.Sensor = masp.ShoulderSensorData.ToArray();
                             ChangeStateTo(States.Done);
                         }
                         break;
@@ -239,10 +292,9 @@ namespace SerialLibrary
                     {
                         if (true)
                         {
-                            _apcq.SwitchConsumerActionTo(ListenAndCheck);
+                            apcq.SwitchConsumerActionTo(masp.ListenAndCheck);
                             ThrowRequested = false;
                             throwData.WriteDataToJsonFile(writeToJsonFilePath);
-
                             ChangeStateTo(States.Idle);
                         }
                         break;
@@ -252,206 +304,14 @@ namespace SerialLibrary
                         break;
                     }
             }
-        }
 
-        #endregion
-
-        #region Produce Actions
-
-        public void Produce(byte b)
-        {
-            _apcq.Produce(b);
-        }
-
-        #endregion
-
-        #region Consume Actions
-        /// <summary>
-        /// Used to consume incoming byte data from arduino and updates shoulder sensor data
-        /// </summary>
-        /// <param name="inByte"></param> 
-        public void AddByteToList(byte inByte)
-        {
-            char inChar = (char)inByte;
-          
-
-            if (inChar == '\n' & inString.EndsWith("END"))
-            {
-                //Console.WriteLine($"End was detected");
-                isFinished = true;
-                clearString();
-                _shoulderSensorData.RemoveRange(_shoulderSensorData.Count - 3, 3);
-                chunkUpdater(true);
-                //Console.WriteLine("Shoulder Sensor Data:");
-                //_shoulderSensorData.ForEach(Console.WriteLine);
-                UpdateStateMachine();
-            }
-            else
-            {
-                if (inString.Length >= 3)
-                {
-                    inString = $"{inString.Substring(1, 2)}{inChar}";
-                }
-                else
-                {
-                    inString += inChar;
-                }
-                int angle;
-                if(inByte<200)
-                {
-                    angle = inByte;
-                }
-                else
-                {
-                    angle = inByte - 256;
-                }
-                _shoulderSensorData.Add(angle);
-                if (_shoulderSensorData.Count <= arraySize)
-                {
-                    chunkUpdater(false);
-                }
-
-                //Console.WriteLine(inByte);
-            }
-        }
-        public void ListenAndCheck(byte inByte)
-        {
-            char inChar = (char)inByte;
-            bool isEqual = false;
-            if (inChar == '\n')
-            {
-                if (showDiag)
-                {
-                    Console.WriteLine(inString);
-                }
-                if (inString.Equals(_checkString))
-                {
-                    isEqual = true;
-                    isStarted = true;
-                    UpdateStateMachine();
-                    //Console.WriteLine(_checkString + " string was detected");
-                }
-                inString = "";
-            }
-            else
-            {
-                inString = inString + inChar;
-                //Console.WriteLine(inChar);
-            }
-
-
-            if (isEqual)
-            {
-                //return true;
-            }
-            else
-            {
-                //return false;
-            }
-
-        }
-        public void Listen(byte inByte)
-        {
-            char inChar = (char)inByte;
-            if (inChar == '\n')
-            {
-                if (true)
-                {
-                    Console.WriteLine($"Ardy said: {inString}");
-                }
-                UpdateStateMachine();
-                inString = "";
-            }
-            else
-            {
-                inString = inString + inChar;
-                //Console.WriteLine(inChar);
-            }
-        }
-        /// <summary>
-        /// Listens for a "HELLO" from Arduino and repeats it back to Arduino
-        /// </summary>
-        /// <param name="inByte"></param>
-        public void ListenAndEchoHello(byte inByte)
-        {
-            char inChar = (char)inByte;
-
-            if (inChar == '\n')
-            {
-                Console.WriteLine($"From Arduino: {inString}");
-
-                if (inString == "HELLO")
-                {
-                    Console.WriteLine("Hello Received from Ardy, Sending Hello Back to Arduino");
-                    isHelloReceived = true;
-                    _port.Write(inString + '\n');
-                    UpdateStateMachine();
-                }
-                clearString();
-            }
-            else
-            {
-                inString = inString + inChar;
-            }
-        }
-        private void SendNewThrowDataToArdy(ThrowData commandData)
-        {
-            SendMessageToArdy("NEWTHROW"); //This tells the arduino that new throw data is coming
-          
-            //var b = BuildFakeThrowCommandData();
-            //var commandData = RetrieveCommandDataFromPython();
-            var shoulderFloatCmdData = commandData.Data.Shoulder.Cmd;
-            var shoulderCmdData = ConvertFloatArrayToIntArray(shoulderFloatCmdData);
-
-            var b = ConvertIntArrayToByteArray(shoulderCmdData);
-            bool showChunkDiag = false;
-            if (arraySize != commandData.Data.Shoulder.Cmd.Length)
-            {
-                Console.WriteLine("!!!!!!!!!!!!!!!!!SOMETHING is wrong with array size coming from python");
-                Console.WriteLine(commandData.Data.Shoulder.Cmd.Length);
-            }
-            int chunkSize = 50;
-            int N = (int)Math.Ceiling((double)arraySize/chunkSize);
-            int index;
-            Console.WriteLine($"Chunking the Throw Command Data into {N} Chunks of {chunkSize} bytes each");
-            for (int i = 0; i < N; i++)
-            {
-                index = chunkSize * i;
-                if (i == N - 1)
-                {
-                    int lastChunk = arraySize - (chunkSize * i);
-                    chunkSize = lastChunk;
-                }
-                if (showChunkDiag) //diagnostic for sending chunks, set to true
-                {
-                    Console.WriteLine($"i is equal to: {i}, chunk size is: {chunkSize} and index is {index}");
-                }
-
-                _port.Write(b, index, chunkSize);
-                Thread.Sleep(10); // this number is critical so that the Arduino has enough time to keep eating before its buffer is filled
-
-            }
-            Thread.Sleep(10); //
-            SendMessageToArdy("END"); //This tells arduino that the stream of throw command data is at its end
- 
-        }
-        public void SendMessageToArdy(string message)
-        {
-            _port.Write(message + '\n');
-            Console.WriteLine($"Sending Message to Arduino: {message}");
+            isCurrentlyScanning = false;
         }
 
         #endregion
 
         #region Helper Methods
 
-        public void AssignSerialPort(SerialPort port)
-        {
-            stopWatch = new Stopwatch();
-            _port = port;
-            ChangeStateTo(States.OnStartup);
-            UpdateStateMachine();
-        }
         private byte[] BuildFakeThrowCommandData()
         {
             byte[] b = new byte[arraySize];
@@ -486,63 +346,6 @@ namespace SerialLibrary
             }
             return b;
         }
-        private void chunkUpdater(bool updateAll)
-        {
-            int start, count;
-            if (_shoulderSensorData.Count == 1)
-            {
-                iChunk = 1;
-            }
-
-            if (_shoulderSensorData.Count >= updateChunkSize * iChunk || updateAll)
-            {
-                start = updateChunkSize * (iChunk - 1);
-                count = _shoulderSensorData.Count - start;
-                if (count > 0)
-                {
-                    if (updatedDataEvent != null)
-                    {
-                        updatedDataEvent(GetDataPointRange(start, count));
-                        iChunk++;
-                    }
-                }
-            }
-        }
-        private void clearString()
-        {
-            inString = "";
-        }
-        public int[] ConvertFloatArrayToIntArray(float[] inArray)
-        {
-            int[] outArray = new int[inArray.Length];
-            int i = 0;
-            foreach (float item in inArray)
-            {
-                outArray[i] = (int)item;
-                i++;
-            }
-            return outArray;
-        }
-        private List<Point> ConvertIntArraysToPointList(int[] timeArray, int[] intArray)
-        {
-            var listData = new List<Point>();
-            for (int i = 0; i < intArray.Length; i++)
-            {
-                Point p = new Point(timeArray[i], intArray[i]);
-                listData.Add(p);
-            }
-            return listData;
-        }
-        public byte[] ConvertIntArrayToByteArray(int[] intArray)
-        {
-            var L = intArray.Length;
-            byte[] byteArray = new byte[L];
-            for (int i = 0; i < L; i++)
-            {
-                byteArray[i] = (byte)intArray[i];
-            }
-            return byteArray;
-        }
         private int[] CreateTimeSeries(int arrayLength)
         {
             var timeArray = new int[arrayLength];
@@ -555,8 +358,10 @@ namespace SerialLibrary
         }
         public void Dispose()
         {
-            _apcq.Dispose();
+            SerialClient.Dispose();
+            apcq.Dispose();
         }
+
         /// <summary>
         /// Execute Python Script to Calculate New Open-Loop Control Signal
         /// </summary>
@@ -567,26 +372,14 @@ namespace SerialLibrary
             var exitCodeWasZero = RunPythonScript.RunCommand(pythonScriptPath, pythonExePath);
             return exitCodeWasZero;
         }
-        public List<Point> GetDataPointRange(int start, int count)
-        {
-            List<int> ssd = ShoulderSensorData.GetRange(start, count);
-            List<Point> output = new List<Point>();
-            for (int i = 0; i < ssd.Count; i++)
-            {
-                int t = timeStep_ms * (i + 1 + start);
-                Point p = new Point(t, ssd[i]);
-                output.Add(p);
-            }
-            //Console.WriteLine($"Updating {ssd.Count} New Data Points From Ardy to Plot, range is {start}, {count}");
-            return output;
-        }
+
         public ThrowData LoadCommandDataFromJson()
         {
             var jsonData = new ThrowData();
             jsonData.ReadJsonFile(readableJsonFilePath);
-            var intArray = ConvertFloatArrayToIntArray(jsonData.Data.Shoulder.Cmd);
+            var intArray = ArrayConverter.ConvertFloatArrayToIntArray(jsonData.Data.Shoulder.Cmd);
             var timeArray = CreateTimeSeries(intArray.Length);
-            commandDataEvent(ConvertIntArraysToPointList(timeArray, intArray));
+            commandDataEvent(ArrayConverter.ConvertIntArraysToPointList(timeArray, intArray));
             return jsonData;
         }
         /// <summary>
@@ -596,9 +389,9 @@ namespace SerialLibrary
         {
             var jsonData = new ThrowData();
             jsonData.ReadJsonFile(readableJsonFilePath);
-            var intArray = ConvertFloatArrayToIntArray(jsonData.Data.Shoulder.Ref);
+            var intArray = ArrayConverter.ConvertFloatArrayToIntArray(jsonData.Data.Shoulder.Ref);
             var timeArray = CreateTimeSeries(intArray.Length);
-            referenceDataEvent(ConvertIntArraysToPointList(timeArray, intArray));
+            referenceDataEvent(ArrayConverter.ConvertIntArraysToPointList(timeArray, intArray));
         }
         private int OpenLoopStaticOutput(double ref_deg)
         {

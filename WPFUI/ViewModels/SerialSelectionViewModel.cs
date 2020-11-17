@@ -10,6 +10,10 @@ using SerialLibrary;
 using System.IO.Ports;
 using static SerialLibrary.RobotArmProtocol;
 
+// TODO - cleanup the open connection to serial port stuff, both here and in serialClient
+
+
+
 namespace WPFUI.ViewModels
 {
     public class SerialSelectionViewModel : Screen
@@ -25,7 +29,7 @@ namespace WPFUI.ViewModels
         TimeSpan tmpInterval;
         private BindableCollection<String> _ports;
         private string _comboBoxText;
-        private string _startButtonText;
+        private String _startButtonText;
         private string _selectedPort;
         private String _processStateString;
         private String _rapStateString;
@@ -50,6 +54,20 @@ namespace WPFUI.ViewModels
             }
         }
 
+        private States state;
+        public States State 
+        {
+            get
+            {
+                return state;
+            }
+
+            set
+            {
+                state = value;
+                StartButtonText = State.ToString().ToUpper();
+            }
+        }
 
         public BindableCollection<String> Ports
         {
@@ -65,15 +83,11 @@ namespace WPFUI.ViewModels
 
         }
 
-        private SerialClient serialClient;
-
-        public SerialClient SerialClient
+        public RobotArmProtocol RobotArmProtocol
         {
-            get { return serialClient; }
-            set { serialClient = value; }
+            get; 
+            set; 
         }
-
-
         public string ComboBoxText
         {
             get
@@ -135,11 +149,12 @@ namespace WPFUI.ViewModels
                 if (_selectedPort != null)
                 {
                     Console.WriteLine($"Port Selected: {_selectedPort}");
-                    StartButtonText = "CONNECT";
+                    //StartButtonText = "CONNECT";
+                    State = States.Connect;
                 }
             }
         }
-        public string StartButtonText
+        public String StartButtonText
         {
             get
             {
@@ -166,13 +181,25 @@ namespace WPFUI.ViewModels
 
         #endregion
 
+        #region Enums
+        public enum States
+        {
+            Scan,
+            Connect,
+            Disconnect
+        }
+
+        #endregion
+
         #region Constructors
         public SerialSelectionViewModel()
         {
             _isConnected = false;
             _selectedPort = null;
-            StartButtonText = "SCAN";
+            //StartButtonText = "SCAN";
+            State = States.Scan;
             ComboBoxText = "Scan for Ports";
+      
            
         }
         #endregion
@@ -182,53 +209,54 @@ namespace WPFUI.ViewModels
 
         }
 
-        public bool CanStartButton()
-        {
-            return true;
-        }
 
         public void StartButton()
         {
-            if (!IsConnected)
+            switch (State)
             {
-                if (SelectedPort == null || Ports == null) //"SCAN"
-                {
-                    Ports = new BindableCollection<String>(GetAvailableComPorts());
-                    Console.WriteLine($"Ports Collection Count: {Ports.Count}");
-                    
-                    if (Ports.Count > 0)
+                case States.Scan:
                     {
-                        string checkPort = checkForKnownArduinoPorts(knownArduinoPorts);
-                        if (IsAutoConnect & checkPort != null)
+                        Ports = new BindableCollection<String>(GetAvailableComPorts());
+                        Console.WriteLine($"Ports Collection Count: {Ports.Count}");
+
+                        if (Ports.Count > 0)
                         {
-                            SelectedPort = checkPort;
-                            tryToConnect();
+                            string checkPort = checkForKnownArduinoPorts(knownArduinoPorts);
+                            if (IsAutoConnect & checkPort != null)
+                            {
+                                SelectedPort = checkPort;
+                                tryToConnect();
+                            }
+                            else
+                            {
+                                ProcessStateString = "Choose a Port";
+                                ComboBoxText = "Ports";
+                            }
                         }
                         else
                         {
-                            ProcessStateString = "Choose a Port";
-                            ComboBoxText = "Ports";
+                            ProcessStateString = $"No Ports Available, Rescan";
                         }
+                        break;
                     }
-                    else
+                case States.Connect:
                     {
-                        ProcessStateString = $"No Ports Available, Rescan";
+                        tryToConnect();
+                        break;
                     }
-                }
-                else
-                {
-                    // Opening port "CONNECT"
-                    tryToConnect();
-                }
+                case States.Disconnect:
+                    {
+                        //Closing Port "DISCONNECTING"
+                        ProcessStateString = $"{SelectedPort} port has been disconnected";
+                        CloseAndDispose();
+                        State = States.Scan;
+                        ComboBoxText = "Scan for Ports";
+                    }
+                    break;
+                default:
+                    break;
             }
-            else
-            {
-                //Closing Port "DISCONNECTING"
-                ProcessStateString = $"{SelectedPort} port has been disconnected";
-                CloseAndDispose();
-                StartButtonText = "SCAN";
-                ComboBoxText = "Scan for Ports";
-            }
+
         }
 
         private string checkForKnownArduinoPorts(string[] arduinoPorts)
@@ -253,9 +281,14 @@ namespace WPFUI.ViewModels
         }
 
 
+        // TODO - move this to SerialClient
         void tryToConnect()
         {
-            bool isConnSuccess = openConn();
+            if (RobotArmProtocol == null)
+            {
+                RobotArmProtocol = new RobotArmProtocol(SelectedPort);
+            }
+            bool isConnSuccess = OpenSelectedPortOnSerialClient();
 
             if (isConnSuccess)
             {
@@ -263,7 +296,8 @@ namespace WPFUI.ViewModels
                 Console.WriteLine($"Serial Connected to: {_selectedPort}");
                 //StartButtonVisibility = Visibility.Hidden;
                 ProcessStateString = $"{SelectedPort} port is connected";
-                StartButtonText = "DISCONNECT";
+                //StartButtonText = "DISCONNECT";
+                State = States.Disconnect;
                 if (connectionMadeEvent != null)
                 {
                     connectionMadeEvent();
@@ -276,15 +310,13 @@ namespace WPFUI.ViewModels
             }
         }
 
-        private bool openConn()
+        private bool OpenSelectedPortOnSerialClient()
         {
-         
-            serialClient = new SerialClient(SelectedPort, 115200);
-            serialClient.RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
-            serialClient.OnReceiving += new EventHandler<DataStreamEventArgs>(receiveHandler);
-            return serialClient.OpenConn(SelectedPort, 115200);
+            RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
+            return RobotArmProtocol.SerialClient.OpenConn(SelectedPort, 115200);
         }
 
+        // TODO - move this to SerialClient
         public List<String> GetAvailableComPorts()
         {
             List<String> output = new List<String>();
@@ -300,83 +332,25 @@ namespace WPFUI.ViewModels
         private void RobotArmProtocol_stateChangedEvent(string message)
         {
             RAPStateString = $"RAP State: {message}";
-            switch (SerialClient.RobotArmProtocol.state)
-            {
-                case States.OnStartup:
-                    break;
-                case States.Initialized:
-                    break;
-                case States.Idle:
-                    break;
-                case States.TaskPlanning:
-                    break;
-                case States.Sending:
-                    break;
-                case States.Starting:
-                    break;
-                case States.Receiving:
-                    break;
-                case States.Done:
-                    break;
-                case States.Error:
-                    break;
-                default:
-                    break;
-            }
         }
 
 
-        private void receiveHandler(object sender, DataStreamEventArgs e)
-        {
-            if (storedResponses == 1)
-            {
-                _startTime = DateTime.Now;
-            }
-
-            storedResponses++;
-            minLen = minLen > e.Response.Length ? e.Response.Length : minLen;
-            maxLen = maxLen < e.Response.Length ? e.Response.Length : maxLen;
-            currentLen = e.Response.Length;
-            sumLen += currentLen;
-            if (sumLen == 1000)
-            {
-                tmpInterval = (DateTime.Now - _startTime);
-                Console.WriteLine(e.Response[0]);
-            }
-        }
         public void CloseAndDispose()
         {
             try
             {
-                if (serialClient != null)
+                if (RobotArmProtocol.SerialClient != null)
                 {
-                    serialClient.CloseConn();
-                    serialClient.OnReceiving -= new EventHandler<DataStreamEventArgs>(receiveHandler);
-                    serialClient.Dispose();
+                    RobotArmProtocol.SerialClient.CloseConn();
+                    RobotArmProtocol.SerialClient.Dispose();
                 }
             }
             catch
             { }
 
-            //clearLists();
-           
             SelectedPort = null;
             IsConnected = false;
             Ports = null;
         }
-
-        public List<Point> GetDataPoints()
-        {
-            List<int> ssd = serialClient.RobotArmProtocol.ShoulderSensorData;
-            List<Point> output = new List<Point>();
-            for (int i = 0; i < ssd.Count; i++)
-            {
-                Point p = new Point(i+1, ssd[i]);
-                output.Add(p);
-            }
-            Console.WriteLine($"Received Data Points From Ardy Count: {ssd.Count}");
-            return output;
-        }
-
     }
 }

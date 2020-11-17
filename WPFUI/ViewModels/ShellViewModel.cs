@@ -22,7 +22,6 @@ namespace WPFUI.ViewModels
         private Screen pageOneViewModel;
         private SerialSelectionViewModel serialSelectionViewModel;
         private Screen throwingViewModel;
-        private SerialClient serialClient;
 
         #endregion
 
@@ -104,8 +103,8 @@ namespace WPFUI.ViewModels
         private void RobotArmProtocol_stateChangedEvent(string message)
         {
 
-            ConvertStateToStatusColor(serialSelectionViewModel.SerialClient.RobotArmProtocol.state);
-            if (serialSelectionViewModel.SerialClient.RobotArmProtocol.state == States.Idle)
+            ConvertStateToStatusColor(serialSelectionViewModel.RobotArmProtocol.state);
+            if (serialSelectionViewModel.RobotArmProtocol.state == States.Idle)
             {
                 ThrowingButtonVisibility = Visibility.Visible;
             }
@@ -113,7 +112,7 @@ namespace WPFUI.ViewModels
 
         private void SerialSelectionViewModel_connectionMadeEvent()
         {
-            serialSelectionViewModel.SerialClient.RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
+            serialSelectionViewModel.RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
         }
         #endregion
 
@@ -148,8 +147,7 @@ namespace WPFUI.ViewModels
                 }
                 else
                 {
-                    serialClient = serialSelectionViewModel.SerialClient;
-                    throwingViewModel = new ThrowingViewModel(serialClient);
+                    throwingViewModel = new ThrowingViewModel(serialSelectionViewModel.RobotArmProtocol);
                     //_serialSelectionViewModel.SerialClient.RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
                 }
             
@@ -171,7 +169,7 @@ namespace WPFUI.ViewModels
                     {
                         StatusBarColor = Brushes.BlueViolet;
                         IsAnimationRunning = true;
-                        serialSelectionViewModel.SerialClient.RobotArmProtocol.UpdateStateMachine();
+                        //serialSelectionViewModel.RobotArmProtocol.UpdateStateMachine();
                         break;
                     }
                 case States.Starting:
@@ -192,13 +190,13 @@ namespace WPFUI.ViewModels
                     }
             }
         }
-
         public override void TryClose(bool? dialogResult = null)
         {
             Dispose();
             base.TryClose(dialogResult);
         }
 
+        // TODO - Fix this Dispose Method
         public void Dispose()
         {
             if (serialSelectionViewModel != null)
@@ -208,7 +206,6 @@ namespace WPFUI.ViewModels
             }
 
         }
-
         protected override void OnDeactivate(bool close)
         {
             try
