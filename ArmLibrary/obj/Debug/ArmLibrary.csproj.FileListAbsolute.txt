@@ -15,4 +15,3 @@ C:\Users\gardn\source\repos\MarinoArm\ArmLibrary\bin\Debug\System.Memory.xml
 C:\Users\gardn\source\repos\MarinoArm\ArmLibrary\bin\Debug\System.Numerics.Vectors.xml
 C:\Users\gardn\source\repos\MarinoArm\ArmLibrary\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
 C:\Users\gardn\source\repos\MarinoArm\ArmLibrary\obj\Debug\ArmLibrary.csproj.CopyComplete
-C:\Users\gardn\source\repos\MarinoArm\ArmLibrary\obj\Debug\ArmLibrary.csprojAssemblyReference.cache

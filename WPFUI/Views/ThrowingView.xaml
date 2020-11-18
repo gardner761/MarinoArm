@@ -29,6 +29,9 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="20"/>
             <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="auto"/>
             <ColumnDefinition Width="auto"/>
             <ColumnDefinition Width="auto"/>
             <ColumnDefinition Width="20"/>
@@ -40,7 +43,7 @@
         <Rectangle Grid.Row="0" Grid.RowSpan="5" Grid.Column="0"
                    Fill="#FF121212"/>
 
-        <TextBlock  Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="6" 
+        <TextBlock  Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="5" 
             Style="{StaticResource PageHeaderTextBlockTemplate}"   
             Text="Throwing"/>
 
@@ -51,8 +54,30 @@
             Visibility="{Binding StartButtonVisibility, Mode=OneWay}"
             Content="START"
             HorizontalAlignment="Left"/>
+        
+        <TextBlock  Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" 
+            HorizontalAlignment="Center"  
+            Foreground="White"
+            Text="Throwing Type"/>
 
-        <oxy111:PlotView Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2"  
+        <RadioButton Grid.Row="3" Grid.Column="3"
+             GroupName = "ThrowTypeGroup"
+             Name="CalculateChecked"
+             Style="{StaticResource RadioButtonTemplate}"
+             Content="CALCULATE"/>
+        <RadioButton Grid.Row="3" Grid.Column="4"
+             GroupName = "ThrowTypeGroup"
+             Name="SavedChecked"
+             Style="{StaticResource RadioButtonTemplate}"
+             Content="SAVED"/>
+        <RadioButton Grid.Row="3" Grid.Column="5"
+             GroupName = "ThrowTypeGroup"
+             Name="RerunChecked"
+             Style="{StaticResource RadioButtonTemplate}"
+             Content="RERUN"
+             IsEnabled="{Binding RerunIsEnabled, Mode=OneWay}"/>
+
+        <oxy111:PlotView Grid.Row="5" Grid.Column="8" Grid.ColumnSpan="1"  
             Name="PlotModel1"             
             Model="{Binding Path=PlotModel, Mode=TwoWay}"
             Background="Black" Foreground="#FF706E6E"
@@ -62,7 +87,7 @@
             FontSize="20">
         </oxy111:PlotView>
 
-        <oxy111:PlotView Grid.Row="5" Grid.Column="5" Grid.ColumnSpan="2"  
+        <oxy111:PlotView Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="6"
             Name="CmdPlotModel"             
             Model="{Binding Path=CmdPlotModel, Mode=TwoWay}"
             Background="Black" Foreground="#FF706E6E"

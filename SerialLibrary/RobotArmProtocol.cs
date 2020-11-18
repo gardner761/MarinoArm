@@ -17,19 +17,12 @@ using static ArmLibrary.GlobalVariables;
 
 namespace SerialLibrary
 {
-    // TODO - Make python scripting async
-
     public class RobotArmProtocol
     {
         #region Defines
 
         public delegate void StateChangedEvent(string message);
         public event StateChangedEvent stateChangedEvent;
-
-        public delegate void ReferenceDataEvent(List<Point> data);
-        public event ReferenceDataEvent referenceDataEvent;
-        public delegate void CommandDataEvent(List<Point> data);
-        public event CommandDataEvent commandDataEvent;
 
         public MarinoArmSerialProcessor masp;
         private String portName;
@@ -55,9 +48,27 @@ namespace SerialLibrary
         bool startingWithSavedPythonFile = false;
         System.Timers.Timer timer;
 
+        private ThrowType throwTypeRequested;
+
         #endregion
 
         #region Properties
+
+        public ThrowData ThrowData
+        {
+            get 
+            {
+                return throwData;
+            }
+            private set
+            {
+            }
+        }
+
+        /// <summary>
+        /// Selected by the UI
+        /// </summary>
+        public ThrowType ThrowTypeSelected { get; set; }
 
         private int throwCtr;
         public int ThrowCtr
@@ -80,12 +91,20 @@ namespace SerialLibrary
             Idle = 10,
             TaskPlanning = 20,
             Calculating,
+            Loading,
             Sending,
-            Starting,
             Receiving,
             Done = 100,
             Error = 911
         }
+
+        public enum ThrowType
+        {
+            Calculated,
+            Saved,
+            Rerun
+        }
+
         #endregion
 
         #region Constructors
@@ -128,15 +147,20 @@ namespace SerialLibrary
         public void SerialClient_ConnectionMadeEvent()
         {
             //Starts the periodic clock to execute the UpdateStateMachine method
-            timer = new System.Timers.Timer(200); //1000 msec
+            timer = new System.Timers.Timer(50); //1000 msec
             timer.Elapsed += timer_Tick;
             timer.Start();
         }
 
         bool isCurrentlyScanning = false;
         int _stepNumber = 0;
+        string errorMsg;
+       
 
-        public void UpdateStateMachine()
+        /// <summary>
+        /// Manages the state of the throw
+        /// </summary>
+        public async void UpdateStateMachine()
         {
             isCurrentlyScanning = true;
 
@@ -194,7 +218,7 @@ namespace SerialLibrary
                         if (ThrowRequested)
                         {
                             ThrowCtr++;
-                            CalculateNewThrowRequested = true;
+                            throwTypeRequested = ThrowTypeSelected;
                             ChangeStateTo(States.TaskPlanning);
                         }
 
@@ -202,59 +226,83 @@ namespace SerialLibrary
                     }
                 case States.TaskPlanning:
                     {
-                        if (CalculateNewThrowRequested)
+                        switch(throwTypeRequested)
                         {
-                            ChangeStateTo(States.Calculating);
+                            case ThrowType.Calculated:
+                                {
+                                    ChangeStateTo(States.Calculating);
+                                    break;
+                                }
+                            case ThrowType.Saved:
+                                {
+                                    ChangeStateTo(States.Loading);
+                                    break;
+                                }
+                            case ThrowType.Rerun:
+                                {
+                                    ChangeStateTo(States.Sending);
+                                    break;
+                                }
+                            default:
+                                {
+                                    errorMsg = "Error: no throw type was selected";
+                                    ChangeStateTo(States.Error);
+                                    break;
+                                }
                         }
 
                         break;
                     }
                 case States.Calculating:
                     {
-                        bool pythonExecutedSuccessfully = false;
-                            
-                        if (ThrowCtr == 1 & startingWithSavedPythonFile)
-                        {
 
+                        bool pythonExecutedSuccessfully = await Task.Run(() => ExecutePythonNewThrowCalculation());
+
+                        if (pythonExecutedSuccessfully)
+                        {
+                                ChangeStateTo(States.Loading);
                         }
                         else
                         {
-                            startingWithSavedPythonFile = false;
-                            pythonExecutedSuccessfully = ExecutePythonNewThrowCalculation();
-                        }
-                        if (pythonExecutedSuccessfully || startingWithSavedPythonFile)
-                        {
-                            if (ThrowCtr == 1 || ThrowCtr % refreshPlotCount == 1) //if this is the first throw, then want to read the ref signal and have it plotted
-                            {
-                                LoadReferenceDataFromJson();
-                            }
-                            throwData = LoadCommandDataFromJson();
-                            if(startingWithSavedPythonFile)
-                            {
-                                throwData.Data.TrialNumber = ThrowCtr;
-                            }
- 
-                            if (throwData.Data.TrialNumber != ThrowCtr )
-                            {
-                                Console.WriteLine($"!!!!!!!!!!Big error in code: mismatch between internal throw counter and python counter: {ThrowCtr} to {throwData.Data.TrialNumber}");
-                                ChangeStateTo(States.Error);
-                            }
-
-
-                            ChangeStateTo(States.Starting);
-                        }
-                        else //Python did not execute successfully
-                        {
-                            Console.WriteLine("Python did not execute successfully, debugging needed");
+                            errorMsg = "Python did not execute successfully, debugging needed";
                             ChangeStateTo(States.Error);
-                           
                         }
                         
                         break;
                     }
-                case States.Starting:
+                case States.Loading: //Loading Json from Python
                     {
+                        string filePath;
+                        if(throwTypeRequested == ThrowType.Saved)
+                        {
+                            filePath = readableSavedPythonJsonFilePath;
+                        }
+                        else
+                        {
+                            filePath = readableJsonFilePath;
+                        }
 
+                        throwData = LoadThrowDataFromJson(filePath);
+
+                        if (throwTypeRequested == ThrowType.Saved)
+                        {
+                            throwData.Data.TrialNumber = ThrowCtr;
+                        }
+
+                        if (throwData.Data.TrialNumber != ThrowCtr)
+                        {
+                            errorMsg = $"Error: mismatch between internal throw counter and python counter: {ThrowCtr} to {throwData.Data.TrialNumber}";
+                            ChangeStateTo(States.Error);
+                        }
+                        else
+                        {
+                            ChangeStateTo(States.Sending);
+                        }
+
+                        break;
+                    }
+                case States.Sending:
+                    {
                         if (_stepNumber == 0) //Send throwData to arduino
                         {
                             masp.CheckString = "START";
@@ -271,12 +319,13 @@ namespace SerialLibrary
                             masp.CheckString = "END";
                             apcq.SwitchConsumerActionTo(masp.AddByteToList);
                             _stepNumber = 0;
+                            timer.Stop();
                             ChangeStateTo(States.Receiving);
                         }
 
                         break;
                     }
-                case States.Receiving: //Reading Data from Arduino
+                case States.Receiving: //Receiving Data from Arduino
                     {
                         if (masp.IsFinished) //Waiting to read the word "END" from Arduino
                         {
@@ -284,6 +333,7 @@ namespace SerialLibrary
                             masp.IsFinished = false;
                             apcq.SwitchConsumerActionTo(masp.Listen);
                             throwData.Data.Shoulder.Sensor = masp.ShoulderSensorData.ToArray();
+                            timer.Start();
                             ChangeStateTo(States.Done);
                         }
                         break;
@@ -301,7 +351,7 @@ namespace SerialLibrary
                     }
                 case States.Error:
                     {
-                        break;
+                        throw new Exception(errorMsg);
                     }
             }
 
@@ -346,7 +396,7 @@ namespace SerialLibrary
             }
             return b;
         }
-        private int[] CreateTimeSeries(int arrayLength)
+        public int[] CreateTimeSeries(int arrayLength)
         {
             var timeArray = new int[arrayLength];
             for (int i = 0; i < arrayLength; i++)
@@ -360,12 +410,13 @@ namespace SerialLibrary
         {
             SerialClient.Dispose();
             apcq.Dispose();
+            timer.Dispose();
         }
 
         /// <summary>
         /// Execute Python Script to Calculate New Open-Loop Control Signal
         /// </summary>
-        public bool ExecutePythonNewThrowCalculation()
+        private bool ExecutePythonNewThrowCalculation()
         {
             var pythonScriptPath = @"C:\Users\gardn\source\repos\MarinoArm\Python\MarinoArm.py";
             var pythonExePath = @"C:\Users\gardn\source\repos\MarinoArm\Python\venv\Scripts\python.exe";
@@ -373,26 +424,13 @@ namespace SerialLibrary
             return exitCodeWasZero;
         }
 
-        public ThrowData LoadCommandDataFromJson()
+        public ThrowData LoadThrowDataFromJson(String readableJsonFilePath)
         {
             var jsonData = new ThrowData();
             jsonData.ReadJsonFile(readableJsonFilePath);
-            var intArray = ArrayConverter.ConvertFloatArrayToIntArray(jsonData.Data.Shoulder.Cmd);
-            var timeArray = CreateTimeSeries(intArray.Length);
-            commandDataEvent(ArrayConverter.ConvertIntArraysToPointList(timeArray, intArray));
             return jsonData;
         }
-        /// <summary>
-        /// Loads the shoulder reference data from the python json
-        /// </summary>
-        private void LoadReferenceDataFromJson()
-        {
-            var jsonData = new ThrowData();
-            jsonData.ReadJsonFile(readableJsonFilePath);
-            var intArray = ArrayConverter.ConvertFloatArrayToIntArray(jsonData.Data.Shoulder.Ref);
-            var timeArray = CreateTimeSeries(intArray.Length);
-            referenceDataEvent(ArrayConverter.ConvertIntArraysToPointList(timeArray, intArray));
-        }
+
         private int OpenLoopStaticOutput(double ref_deg)
         {
             double Kol = 165.0;
@@ -413,135 +451,6 @@ namespace SerialLibrary
             }
         }
     
-        #endregion
-
-        #region Unused Methods
-        //listenAndUpdate Method
-        void listenAndUpdate(SerialPort port)
-        {
-            char inChar;
-            const int CODE_LENGTH = 10, RECEIPT_LENGTH = 6;
-            int receiptFlag = 0;
-            int codeFlag = 0;
-
-            while (port.BytesToRead > 0)// & !codeFlag & !receiptFlag)
-            {
-                inChar = (char)port.ReadChar();
-                if (inChar == '\r')
-                {
-                    if (inString.Length < 2)
-                    {
-                        inString = "";
-                    }
-                    else if (inString.Substring(0, 2) == "tx" & inString.Length == CODE_LENGTH)
-                    {
-                        codeFlag = 1;
-                    }
-                    else if (inString.Substring(0, 2) == "rx" & inString.Length == RECEIPT_LENGTH)
-                    {
-                        receiptFlag = 1;
-                    }
-                    else
-                    {
-                        inString = "";
-                    }
-                }
-
-                else if (inChar != '\n' | inString.Length < 2)
-                {
-                    inString += inChar;
-                }
-
-
-                //Incoming Code Detected
-                if (codeFlag == 1)
-                {
-                    if (showDiag)
-                    {
-                        Console.WriteLine("Incoming code detected:  " + inString);
-                    }
-                    inString = inString.Substring(2);
-                    string locationString = inString.Substring(0, 4);
-                    if (locationString[3] == '_')
-                    {
-                        locationString = locationString.Substring(0, 3);
-                    }
-                    //Serial.println("location String: " + locationString);
-                    string stepString = inString.Substring(4);
-                    //Serial.println("Step String: " + stepString);
-                    //Serial.println("Size String: " + (String)sizeof(states));
-
-
-                    inString = "";
-                    codeFlag = 0;
-                }
-
-
-
-                //Incoming Reply from Outgoing Command Detected: reset send flag
-                if (receiptFlag == 1)
-                {
-                    if (showDiag)
-                    {
-                        Console.WriteLine("Receipt code detected:  " + inString);
-                    }
-
-                    inString = "";
-                    receiptFlag = 0;
-                }
-
-            }//while
-        }//END listenAndUpdate
-
-        public void ReadFastData(SerialPort port, string message, int[] arduinoData)
-        {
-            int i = 0;
-
-            if (message == "HELLO")
-            {
-                isConnected = true;
-                port.Write("READY\n");
-                Console.WriteLine("C# heard Ardy's Hello");
-                message = "";
-            }
-            else if ((isConnected & message.Length > 0) || isStarted)
-            {
-                //Console.WriteLine(message);
-                if (message == "START")
-                {
-                    stopWatch.Start();
-                    Console.WriteLine("Ardy is sending data... Now!");
-                    isStarted = true;
-                    i = 0;
-                }
-                else if (message == "END" || i >= 1000)
-                {
-                    isStarted = false;
-                    stopWatch.Stop();
-                    Console.WriteLine("Ardy just stopped sending data");
-                    Console.WriteLine("Ardy sent: " + arduinoData.Length.ToString() + " data points");
-                    Console.WriteLine("StopWatch: " + stopWatch.ElapsedMilliseconds.ToString() + "msec");
-
-                }
-                else if (isStarted)
-                {
-                    int inInt = port.ReadByte();
-                    arduinoData[i] = inInt;
-                    i++;
-                    //Console.WriteLine(inInt);
-                }
-
-
-                /*port.Write(message + '\n');
-                if (message.Substring(0, 1) == "T" | 1==0)
-                {
-                    Console.WriteLine(message);
-                }*/
-                message = "";
-            }
-
-        }
-
         #endregion
     }
 }

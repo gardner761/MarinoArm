@@ -169,7 +169,7 @@ namespace SerialLibrary
         #endregion
 
         #region Send Methods
-        // TODO - make SendNewThrowDataToArdy async or on it's own thread from the calling source (RAP)
+
         public void SendNewThrowDataToArdy(ThrowData commandData)
         {
             SendMessageToArdy("NEWTHROW"); //This tells the arduino that new throw data is coming
