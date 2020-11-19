@@ -16,6 +16,7 @@ using System.Security.Cryptography;
 
 namespace WPFUI.ViewModels
 {
+    // TODO - add option to update saved throw python json to be the last throw's python json
     class ThrowingViewModel : Screen
     {
         #region Defines
@@ -36,6 +37,8 @@ namespace WPFUI.ViewModels
         }
 
         RobotArmProtocol robotArmProtocol;
+
+        private const int clearPlotCtr=2;
 
         #endregion
 
@@ -64,8 +67,8 @@ namespace WPFUI.ViewModels
             robotArmProtocol.refreshPlotCount = refreshPlotCount;
             robotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
             robotArmProtocol.masp.updatedDataEvent += RobotArmProtocol_updatedDataEvent;
-            robotArmProtocol.referenceDataEvent += RobotArmProtocol_referenceDataEvent;
-            robotArmProtocol.commandDataEvent += RobotArmProtocol_commandDataEvent;
+
+            CalculateChecked = true;
         }
 
         #endregion
@@ -82,17 +85,28 @@ namespace WPFUI.ViewModels
                 case States.Idle:
                     break;
                 case States.TaskPlanning:
-                    break;
+                    if (ThrowCtr % clearPlotCtr == 1 & PlotModel != null)
+                    {
+                        ClearPlot(PlotModel);
+                        ClearPlot(CmdPlotModel);
+                    }
+                        break;
                 case States.Calculating:
                     break;
                 case States.Sending:
-                    break;
-                case States.Starting:
+                    if (ThrowCtr % clearPlotCtr == 1 & PlotModel != null)
+                    {
+                        var refPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Ref);
+                        BuildLineOnPlot(PlotModel, LineType.ShoulderRef, refPoints);
+                    }
+                    var cmdPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Cmd);
+                    BuildLineOnPlot(CmdPlotModel, LineType.ShoulderCmd, cmdPoints);
                     break;
                 case States.Receiving:
                     break;
                 case States.Done:
                     StartButtonVisibility = Visibility.Visible;
+                    RerunIsEnabled = true;
                     break;
                 case States.Error:
                     break;
@@ -101,17 +115,10 @@ namespace WPFUI.ViewModels
             }
         }
 
-        private void RobotArmProtocol_referenceDataEvent(List<Point> data)
-        {
-            ClearPlot(PlotModel);
-            ClearPlot(CmdPlotModel);
-            BuildLineOnPlot(PlotModel, LineType.ShoulderRef, data);
-        }
         private void RobotArmProtocol_updatedDataEvent(List<Point> data)
         {
             if (!isBuiltNewLine)
             {
-                //BuildLineOnPlot(PlotModel, _serialSelectionViewModel.GetDataPoints());
                 BuildLineOnPlot(PlotModel, LineType.ShoulderSensor, data);
                 isBuiltNewLine = true;
             }
@@ -121,21 +128,69 @@ namespace WPFUI.ViewModels
             }
         }
 
-        /// <summary>
-        /// Plots command data
-        /// </summary>
-        /// <param name="data"></param>
-        private void RobotArmProtocol_commandDataEvent(List<Point> data)
-        {
-             BuildLineOnPlot(CmdPlotModel, LineType.ShoulderCmd, data);
-        }
-
-
-
         #endregion
 
         #region Properties
 
+        private bool calculateChecked;
+        public bool CalculateChecked
+        {
+            get { return calculateChecked; }
+            set
+            {
+                if (value.Equals(calculateChecked)) return;
+                calculateChecked = value;
+                if (value)
+                {
+                    robotArmProtocol.ThrowTypeSelected = ThrowType.Calculated;
+                }
+                NotifyOfPropertyChange(() => CalculateChecked);
+            }
+        }
+
+        private bool savedChecked;
+        public bool SavedChecked
+        {
+            get { return savedChecked; }
+            set
+            {
+                if (value.Equals(savedChecked)) return;
+                savedChecked = value;
+                if (value)
+                {
+                    robotArmProtocol.ThrowTypeSelected = ThrowType.Saved;
+                }
+                NotifyOfPropertyChange(() => SavedChecked);
+            }
+        }
+
+        private bool rerunChecked;
+        public bool RerunChecked
+        {
+            get { return rerunChecked; }
+            set
+            {
+                if (value.Equals(rerunChecked)) return;
+                rerunChecked = value;
+                if (value)
+                {
+                    robotArmProtocol.ThrowTypeSelected = ThrowType.Rerun;
+                }
+                NotifyOfPropertyChange(() => RerunChecked);
+            }
+        }
+
+        private bool rerunIsEnabled;
+        public bool RerunIsEnabled
+        {
+            get { return rerunIsEnabled; }
+            set
+            {
+                if (value.Equals(rerunIsEnabled)) return;
+                rerunIsEnabled = value;
+                NotifyOfPropertyChange(() => RerunIsEnabled);
+            }
+        }
         public PlotModel PlotModel
         {
             get 
@@ -371,24 +426,24 @@ namespace WPFUI.ViewModels
             pm.Series.Clear();
             pm.InvalidatePlot(true);
         }
+        private List<Point> ConvertThrowDataMemberToPoints(float[] dm)
+        {
+            var intArray = ArrayConverter.ConvertFloatArrayToIntArray(dm);
+            var timeArray = robotArmProtocol.CreateTimeSeries(intArray.Length);
+            var points = ArrayConverter.ConvertIntArraysToPointList(timeArray, intArray);
+            return points;
+        }
 
         #endregion
 
         #region UI Actions
+
         public void StartButton()
         {
             StartButtonVisibility = Visibility.Hidden;
-
             robotArmProtocol.ThrowRequested = true;
-            //robotArmProtocol.UpdateStateMachine();
-            
             isBuiltNewLine = false;
-            //ClearPlot();
-            
-            
         }
- 
-
 
         #endregion
     }

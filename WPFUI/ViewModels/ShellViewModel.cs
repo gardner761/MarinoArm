@@ -9,6 +9,7 @@ using System.Windows.Media;
 using SerialLibrary;
 using static SerialLibrary.RobotArmProtocol;
 using System.Windows.Media.Animation;
+using System.Diagnostics;
 
 namespace WPFUI.ViewModels
 {
@@ -27,7 +28,7 @@ namespace WPFUI.ViewModels
 
         #region Properties
 
-        private SolidColorBrush _statusBarColor;
+        private SolidColorBrush _statusBarColor = Brushes.Black;
         public SolidColorBrush StatusBarColor
         {
             get
@@ -148,9 +149,7 @@ namespace WPFUI.ViewModels
                 else
                 {
                     throwingViewModel = new ThrowingViewModel(serialSelectionViewModel.RobotArmProtocol);
-                    //_serialSelectionViewModel.SerialClient.RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
                 }
-            
             ActivateItem(throwingViewModel);
         }
 
@@ -169,12 +168,11 @@ namespace WPFUI.ViewModels
                     {
                         StatusBarColor = Brushes.BlueViolet;
                         IsAnimationRunning = true;
-                        //serialSelectionViewModel.RobotArmProtocol.UpdateStateMachine();
                         break;
                     }
-                case States.Starting:
+                case States.Sending:
                     {
-                        StatusBarColor = Brushes.Orange;
+                        //StatusBarColor = Brushes.Orange;
                         IsAnimationRunning = true;
                         break;
                     }
@@ -184,7 +182,13 @@ namespace WPFUI.ViewModels
                     }
                 case States.Done:
                     {
-                        //StatusBarColor = Brushes.LimeGreen;
+                        StatusBarColor = Brushes.LimeGreen;
+                        IsAnimationRunning = false;
+                        break;
+                    }
+                case States.Error:
+                    {
+                        StatusBarColor = Brushes.Red;
                         IsAnimationRunning = false;
                         break;
                     }
@@ -196,7 +200,6 @@ namespace WPFUI.ViewModels
             base.TryClose(dialogResult);
         }
 
-        // TODO - Fix this Dispose Method
         public void Dispose()
         {
             if (serialSelectionViewModel != null)
@@ -214,7 +217,36 @@ namespace WPFUI.ViewModels
             }
             catch
             { }
-
+            if(CheckForActiveThreads())
+            {
+                throw new Exception("More than one active thread preventing application close");
+            }
+            
+            //System.Environment.Exit(0);
         }
+
+        
+        private bool CheckForActiveThreads()
+        {
+            bool output = false;
+            int activeThreadCtr = 0;
+            ProcessThreadCollection currentThreads = Process.GetCurrentProcess().Threads;
+
+            foreach (ProcessThread thread in currentThreads)
+            {
+                if (thread.ThreadState == ThreadState.Running)
+                {
+                    activeThreadCtr++;
+                    if (activeThreadCtr > 1)
+                    { 
+                        return output = true;
+                    }
+                }
+            }
+            return output;
+        }
+
+
+
     }
 }

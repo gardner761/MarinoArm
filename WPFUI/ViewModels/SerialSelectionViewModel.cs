@@ -42,8 +42,8 @@ namespace WPFUI.ViewModels
         #endregion
 
         #region Properties
-        private bool _isAutoConnect = true;
 
+        private bool _isAutoConnect = true;
         public bool IsAutoConnect
         {
             get { return _isAutoConnect; }
@@ -53,7 +53,6 @@ namespace WPFUI.ViewModels
                 NotifyOfPropertyChange(() => IsAutoConnect);
             }
         }
-
         private States state;
         public States State 
         {
@@ -68,7 +67,6 @@ namespace WPFUI.ViewModels
                 StartButtonText = State.ToString().ToUpper();
             }
         }
-
         public BindableCollection<String> Ports
         {
             get
@@ -82,7 +80,6 @@ namespace WPFUI.ViewModels
             }
 
         }
-
         public RobotArmProtocol RobotArmProtocol
         {
             get; 
@@ -100,7 +97,6 @@ namespace WPFUI.ViewModels
                 NotifyOfPropertyChange(() => ComboBoxText);
             }
         }
-
         public bool IsConnected
         {
             get
@@ -122,7 +118,6 @@ namespace WPFUI.ViewModels
                 NotifyOfPropertyChange(() => ProcessStateString);
             }
         }
-
         public String RAPStateString
         {
             get
@@ -192,35 +187,35 @@ namespace WPFUI.ViewModels
         #endregion
 
         #region Constructors
+
         public SerialSelectionViewModel()
         {
             _isConnected = false;
             _selectedPort = null;
-            //StartButtonText = "SCAN";
             State = States.Scan;
             ComboBoxText = "Scan for Ports";
-      
-           
         }
+
         #endregion
 
         protected override void OnDeactivate(bool close)
         {
-
+            
         }
-
-
         public void StartButton()
         {
             switch (State)
             {
                 case States.Scan:
                     {
+                        //Scan for available com ports
                         Ports = new BindableCollection<String>(GetAvailableComPorts());
                         Console.WriteLine($"Ports Collection Count: {Ports.Count}");
 
+                        // If there are ports
                         if (Ports.Count > 0)
                         {
+                            // look for familiar ports that are arduino
                             string checkPort = checkForKnownArduinoPorts(knownArduinoPorts);
                             if (IsAutoConnect & checkPort != null)
                             {
@@ -258,7 +253,6 @@ namespace WPFUI.ViewModels
             }
 
         }
-
         private string checkForKnownArduinoPorts(string[] arduinoPorts)
         {
             string portNameWithHighestPriority = null;
@@ -279,7 +273,6 @@ namespace WPFUI.ViewModels
             }
             return portNameWithHighestPriority;
         }
-
 
         // TODO - move this to SerialClient
         void tryToConnect()
@@ -309,7 +302,6 @@ namespace WPFUI.ViewModels
                 ProcessStateString = $"{SelectedPort} port cannot connect";
             }
         }
-
         private bool OpenSelectedPortOnSerialClient()
         {
             RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
@@ -341,8 +333,7 @@ namespace WPFUI.ViewModels
             {
                 if (RobotArmProtocol.SerialClient != null)
                 {
-                    RobotArmProtocol.SerialClient.CloseConn();
-                    RobotArmProtocol.SerialClient.Dispose();
+                    RobotArmProtocol.Dispose();
                 }
             }
             catch
