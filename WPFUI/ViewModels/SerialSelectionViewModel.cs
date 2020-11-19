@@ -29,6 +29,8 @@ namespace WPFUI.ViewModels
         public delegate void ConnectionMadeEvent();
         public event ConnectionMadeEvent connectionMadeEvent;
 
+        //private struct PortId 
+
         #endregion
 
         #region Properties

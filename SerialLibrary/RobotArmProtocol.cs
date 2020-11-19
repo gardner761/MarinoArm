@@ -281,7 +281,8 @@ namespace SerialLibrary
                         {
                             throwData.Data.TrialNumber = ThrowCtr;
                         }
-
+                        // TODO - error gets thrown if doing rerun then switching back to calculate mode.
+                        // TODO - make throw start at zero.
                         if (throwData.Data.TrialNumber != ThrowCtr)
                         {
                             errorMsg = $"Error: mismatch between internal throw counter and python counter: {ThrowCtr} to {throwData.Data.TrialNumber}";

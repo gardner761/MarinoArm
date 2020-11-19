@@ -657,3 +657,13 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+
+# Personal Exclusions
+
+/Json
+/C++/.vscode
+
+
+
+

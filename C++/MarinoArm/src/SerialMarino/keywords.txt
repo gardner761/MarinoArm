@@ -1,0 +1,11 @@
+SerialBroadcast	KEYWORD1
+listenAndUpdate	KEYWORD2
+checkAndSend	KEYWORD2
+
+SerialMarino 	KEYWORD1
+listenAndCheck	KEYWORD2
+collectNewData	KEYWORD2
+sendMessage	KEYWORD2
+begin		KEYWORD2
+writeByte	KEYWORD2
+dataArray	KEYWORD3
