@@ -29,4 +29,3 @@ C:\Users\gardn\source\repos\MarinoArm\PythonIntegration\bin\Debug\System.Buffers
 C:\Users\gardn\source\repos\MarinoArm\PythonIntegration\bin\Debug\System.Memory.xml
 C:\Users\gardn\source\repos\MarinoArm\PythonIntegration\bin\Debug\System.Numerics.Vectors.xml
 C:\Users\gardn\source\repos\MarinoArm\PythonIntegration\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
-C:\Users\gardn\source\repos\MarinoArm\PythonIntegration\obj\Debug\PythonIntegration.csprojAssemblyReference.cache

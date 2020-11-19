@@ -10,9 +10,6 @@ using SerialLibrary;
 using System.IO.Ports;
 using static SerialLibrary.RobotArmProtocol;
 
-// TODO - cleanup the open connection to serial port stuff, both here and in serialClient
-
-
 
 namespace WPFUI.ViewModels
 {
@@ -20,13 +17,6 @@ namespace WPFUI.ViewModels
     {
         #region Defines
 
-        int storedResponses;
-        int maxLen;
-        int minLen;
-        int currentLen;
-        int sumLen;
-        DateTime _startTime;
-        TimeSpan tmpInterval;
         private BindableCollection<String> _ports;
         private string _comboBoxText;
         private String _startButtonText;
@@ -198,10 +188,7 @@ namespace WPFUI.ViewModels
 
         #endregion
 
-        protected override void OnDeactivate(bool close)
-        {
-            
-        }
+        #region UI Actions
         public void StartButton()
         {
             switch (State)
@@ -209,7 +196,7 @@ namespace WPFUI.ViewModels
                 case States.Scan:
                     {
                         //Scan for available com ports
-                        Ports = new BindableCollection<String>(GetAvailableComPorts());
+                        Ports = new BindableCollection<String>(SerialClient.GetAvailableComPorts());
                         Console.WriteLine($"Ports Collection Count: {Ports.Count}");
 
                         // If there are ports
@@ -220,7 +207,7 @@ namespace WPFUI.ViewModels
                             if (IsAutoConnect & checkPort != null)
                             {
                                 SelectedPort = checkPort;
-                                tryToConnect();
+                                TryToConnect();
                             }
                             else
                             {
@@ -236,7 +223,7 @@ namespace WPFUI.ViewModels
                     }
                 case States.Connect:
                     {
-                        tryToConnect();
+                        TryToConnect();
                         break;
                     }
                 case States.Disconnect:
@@ -253,6 +240,10 @@ namespace WPFUI.ViewModels
             }
 
         }
+
+        #endregion
+
+        #region Helper Methods
         private string checkForKnownArduinoPorts(string[] arduinoPorts)
         {
             string portNameWithHighestPriority = null;
@@ -274,19 +265,20 @@ namespace WPFUI.ViewModels
             return portNameWithHighestPriority;
         }
 
-        // TODO - move this to SerialClient
-        void tryToConnect()
+        void TryToConnect()
         {
             if (RobotArmProtocol == null)
             {
-                RobotArmProtocol = new RobotArmProtocol(SelectedPort);
+                RobotArmProtocol = new RobotArmProtocol();
+                RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
             }
-            bool isConnSuccess = OpenSelectedPortOnSerialClient();
+
+            bool isConnSuccess = RobotArmProtocol.SerialClient.OpenConn(SelectedPort, SerialVariables.BAUD_RATE);
 
             if (isConnSuccess)
             {
                 IsConnected = true;
-                Console.WriteLine($"Serial Connected to: {_selectedPort}");
+                Console.WriteLine($"Serial Connected to: {SelectedPort}");
                 //StartButtonVisibility = Visibility.Hidden;
                 ProcessStateString = $"{SelectedPort} port is connected";
                 //StartButtonText = "DISCONNECT";
@@ -302,30 +294,6 @@ namespace WPFUI.ViewModels
                 ProcessStateString = $"{SelectedPort} port cannot connect";
             }
         }
-        private bool OpenSelectedPortOnSerialClient()
-        {
-            RobotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
-            return RobotArmProtocol.SerialClient.OpenConn(SelectedPort, 115200);
-        }
-
-        // TODO - move this to SerialClient
-        public List<String> GetAvailableComPorts()
-        {
-            List<String> output = new List<String>();
-            string[] ports = SerialPort.GetPortNames();
-            foreach (string port in ports)
-            {
-                output.Add(port);
-                //Console.WriteLine(port);
-            }
-            return output;
-        }
-
-        private void RobotArmProtocol_stateChangedEvent(string message)
-        {
-            RAPStateString = $"RAP State: {message}";
-        }
-
 
         public void CloseAndDispose()
         {
@@ -343,5 +311,15 @@ namespace WPFUI.ViewModels
             IsConnected = false;
             Ports = null;
         }
+
+        #endregion
+
+        #region Event Handlers
+        private void RobotArmProtocol_stateChangedEvent(string message)
+        {
+            RAPStateString = $"RAP State: {message}";
+        }
+
+        #endregion
     }
 }

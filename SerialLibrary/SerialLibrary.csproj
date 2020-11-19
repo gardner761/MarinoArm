@@ -62,6 +62,7 @@
     <Compile Include="ArrayConverter.cs" />
     <Compile Include="AsyncProducerConsumerQueue.cs" />
     <Compile Include="DataStreamEventArgs.cs" />
+    <Compile Include="SerialVariables.cs" />
     <Compile Include="ISerialUser.cs" />
     <Compile Include="RobotArmProtocol.cs" />
     <Compile Include="SerialClient.cs" />

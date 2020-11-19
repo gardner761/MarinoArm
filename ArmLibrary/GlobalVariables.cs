@@ -9,8 +9,8 @@ namespace ArmLibrary
     public static class GlobalVariables
     {
         public const int SAMPLING_FREQUENCY = 100;
-        public const string writeToJsonFilePath = @"C:\Users\gardn\source\repos\MarinoArm\Python\DataFromCSharp.json";
-        public const string readableJsonFilePath = @"C:\Users\gardn\source\repos\MarinoArm\Python\DataFromPython.json";
-        public const string readableSavedPythonJsonFilePath = @"C:\Users\gardn\source\repos\MarinoArm\Python\DataFromPython_saved.json";
+        public const string WRITETO_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Python\DataFromCSharp.json";
+        public const string READABLE_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Python\DataFromPython.json";
+        public const string READABLE_SAVED_PYTHON_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Python\DataFromPython_saved.json";
     }
 }
