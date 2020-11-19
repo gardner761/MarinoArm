@@ -668,7 +668,7 @@ dkms.conf
 
 # Personal Exclusions
 
-/Json
+
 /C++/.vscode
 
 
