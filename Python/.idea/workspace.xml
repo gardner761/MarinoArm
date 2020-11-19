@@ -2,41 +2,57 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="99fa9c83-ffe9-4c7d-bcd4-892f05298e2a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/CSharpTest.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CreateReferenceFile.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DataFromPython.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DataFromPython_saved.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/MarinoArm.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ThrowData.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TrialDataRecord.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Vision/Tracker.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/commandcalculator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/a_create_reference.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/b_tutorial1.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/c_tutorial2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/d_tutorial3.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/reference.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gilc/gilc.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gilc/plant.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/invpen.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testMe.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testeroo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ArmLibrary/ThrowData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/ThrowData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../MarinoArm.sln" beforeDir="false" afterPath="$PROJECT_DIR$/../MarinoArm.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../PythonIntegration/RunPythonScript.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../PythonIntegration/RunPythonScript.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.vs/MarinoArm/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/../.vs/MarinoArm/v16/.suo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.vs/MarinoArm/v16/Browse.VC.db" beforeDir="false" afterPath="$PROJECT_DIR$/../.vs/MarinoArm/v16/Browse.VC.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ArmLibrary/GlobalVariables.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/GlobalVariables.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ArmLibrary/bin/Debug/ArmLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/bin/Debug/ArmLibrary.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ArmLibrary/bin/Debug/ArmLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/bin/Debug/ArmLibrary.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CSharpTest.py" beforeDir="false" afterPath="$PROJECT_DIR$/Test Scripts/CSharpTest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Code Fixes.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Code Fixes.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DataFromCSharp.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DataFromPython.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DataFromPython_saved.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/MarinoArm.py" beforeDir="false" afterPath="$PROJECT_DIR$/MarinoArm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TrialDataRecord.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/commandcalculator.py" beforeDir="false" afterPath="$PROJECT_DIR$/commandcalculator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testMe.py" beforeDir="false" afterPath="$PROJECT_DIR$/Test Scripts/testMe.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testeroo.py" beforeDir="false" afterPath="$PROJECT_DIR$/Test Scripts/testeroo.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../SerialLibrary/RobotArmProtocol.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/RobotArmProtocol.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/SerialClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/SerialClient.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/ViewModels/PageOneViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/ViewModels/PageOneViewModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/ViewModels/SerialSelectionViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/ViewModels/SerialSelectionViewModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/ViewModels/ThrowingViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/ViewModels/ThrowingViewModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/Views/SerialSelectionView.xaml" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/Views/SerialSelectionView.xaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/Views/ThrowingView.xaml" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/Views/ThrowingView.xaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/ArmLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/ArmLibrary.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/ArmLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/ArmLibrary.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/SerialLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/SerialLibrary.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/SerialLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/SerialLibrary.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.csprojAssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.csprojAssemblyReference.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/ArmLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/ArmLibrary.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/ArmLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/ArmLibrary.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/SerialLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/SerialLibrary.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/SerialLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/SerialLibrary.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/WPFUI.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/WPFUI.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/WPFUI.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/WPFUI.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/GeneratedInternalTypeHelper.g.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/GeneratedInternalTypeHelper.g.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.csprojAssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.csprojAssemblyReference.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI_MarkupCompile.lref" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI_MarkupCompile.lref" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -55,6 +71,9 @@
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\gardn\source\repos\MarinoArm\Python\Test Scripts" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\gardn\source\repos\MarinoArm\Python" />
     </key>
@@ -72,7 +91,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/CSharpTest.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\gardn\source\repos\MarinoArm\Python\Test Scripts\CSharpTest.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -156,7 +175,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/testeroo.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\gardn\source\repos\MarinoArm\Python\Test Scripts\testeroo.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -243,5 +262,9 @@
     <state x="-1459" y="162" key="SettingsEditor/0.0.1536.824/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1604441696949" />
     <state x="369" y="110" key="SettingsEditor/0.0.1536.824/-1920.0.1920.1040@0.0.1536.824" timestamp="1604445979619" />
     <state x="369" y="110" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1604625001467" />
+    <state x="465" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1605824182789">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="465" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824/-1920.0.1920.1040@0.0.1536.824" timestamp="1605824182789" />
   </component>
 </project>

@@ -174,7 +174,7 @@ namespace SerialLibrary
                             // Initialize data and write the first throw json
                             ThrowCtr = 0;
                             throwData = new ThrowData();
-                            throwData.WriteFirstThrowDataToJson(WRITETO_JSON_FILEPATH); //Initialize ThrowData
+                            throwData.WriteFirstThrowDataToJson(CSHARP_JSON_FILEPATH); //Initialize ThrowData
                             Console.WriteLine("Initializing First Throw Json File");
                             masp.SendMessageToArdy("HELLO");
                             ChangeStateTo(States.Initialized);
@@ -268,11 +268,11 @@ namespace SerialLibrary
                         string filePath;
                         if(throwTypeRequested == ThrowType.Saved)
                         {
-                            filePath = READABLE_SAVED_PYTHON_JSON_FILEPATH;
+                            filePath = SAVED_PYTHON_JSON_FILEPATH;
                         }
                         else
                         {
-                            filePath = READABLE_JSON_FILEPATH;
+                            filePath = PYTHON_JSON_FILEPATH;
                         }
 
                         throwData = LoadThrowDataFromJson(filePath);
@@ -338,7 +338,7 @@ namespace SerialLibrary
                         {
                             apcq.SwitchConsumerActionTo(masp.ListenAndCheck);
                             ThrowRequested = false;
-                            throwData.WriteDataToJsonFile(WRITETO_JSON_FILEPATH);
+                            throwData.WriteDataToJsonFile(CSHARP_JSON_FILEPATH);
                             ChangeStateTo(States.Idle);
                         }
                         break;

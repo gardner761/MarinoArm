@@ -666,12 +666,26 @@ Mkfile.old
 dkms.conf
 
 
+/build/
+*.suo
+*.user
+_ReSharper.*/
+*.sdf
+bin/
+obj/
+Debug/
+Release/
+*.opensdf
+*.tlog
+*.log
+TestResult.xml
+*.VisualState.xml
+Version.cs
+Version.h
+Version.cpp
+
+
 # Personal Exclusions
-
-
 /C++/.vscode
-
-
-
-
 /Json/ignoreMePlease.txt
+

@@ -3,6 +3,7 @@ from TrialDataRecord import*
 from ThrowData import *
 import numpy as np
 import matplotlib.pyplot as plt
+import config
 
 # Settings
 runSim = True  # disable this normally, use just for simulation
@@ -15,7 +16,7 @@ isFirstThrow = False
 print("-----------------------------------------------------------------------------------")
 print("Step 1 - Read the Json Data from C#:")
 dataIn = ThrowData()
-fileIn = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\DataFromCSharp.json"
+fileIn = config.CSHARP_JSON_FILEPATH
 dataIn.readfile(fileIn)
 
 if dataIn.TrialNumber == 0:
@@ -50,7 +51,7 @@ refSh = commandcalculator.refY.tolist()
 dataOut.Shoulder.Cmd = cmdSh
 dataOut.Shoulder.Est = estSh
 dataOut.Shoulder.Ref = refSh
-fileOut = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\DataFromPython.json"
+fileOut = config.PYTHON_JSON_FILEPATH
 dataOut.writefile(fileOut)
 
 # 4. Simulate the throw (disabled normally)
@@ -68,7 +69,7 @@ if runSim:
 
 
 # 5. Store the data to the Trial Data Record
-file_tdr = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\TrialDataRecord.json"
+file_tdr = config.TRIALDATARECORD_FILEPATH
 tdr = TrialDataRecord()
 
 if dataOut.TrialNumber > 1:  # this loads an existing trial data record as long as it is not the first trial
@@ -102,7 +103,7 @@ tdr.writefile(file_tdr)
 # 6. Plotting Results
 showPlot = False
 if showPlot:
-    file_tdr = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\TrialDataRecord.json"
+    file_tdr = config.TRIALDATARECORD_FILEPATH
     tdr = TrialDataRecord()
     tdr.readfile(file_tdr)
     # plt.clf()

@@ -1,14 +1,13 @@
-from numpy import *
 import matplotlib.pyplot as plt
 from invpen import *
 from gilc.gilc import *
 import CreateReferenceFile as crf
-import ThrowData
 from TrialDataRecord import*
+import config
 
 
-fileTrialData = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\TrialDataFromPython.json"  # json file path to be read by CSharp running this script
-fs = 500.0      # Sampling Frequency, Hz
+fileTrialData = config.TRIALDATARECORD_FILEPATH  # json file path to be read by CSharp running this script
+# fs = config.SAMPLING_FREQUENCY      # Sampling Frequency, Hz
 time = []
 refY = []
 N = 0
