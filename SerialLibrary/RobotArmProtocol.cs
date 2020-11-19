@@ -25,18 +25,13 @@ namespace SerialLibrary
         public event StateChangedEvent stateChangedEvent;
 
         public MarinoArmSerialProcessor masp;
-        private String portName;
-        
-        private string inString;
+
         private const bool showDiag=true;
 
         public bool CalculateNewThrowRequested { get; set; }
 
-        bool isStarted;
-        bool isConnected;
         public int refreshPlotCount;
 
-        Stopwatch stopWatch;
         AsyncProducerConsumerQueue<byte> apcq;
         public States state; 
  
@@ -45,7 +40,6 @@ namespace SerialLibrary
         int timeStep_ms = 1000 / GlobalVariables.SAMPLING_FREQUENCY;
         private ThrowData throwData;
         
-        bool startingWithSavedPythonFile = false;
         System.Timers.Timer timer;
 
         private ThrowType throwTypeRequested;
@@ -109,11 +103,10 @@ namespace SerialLibrary
 
         #region Constructors
 
-        public RobotArmProtocol(String portName)
+        public RobotArmProtocol()
         {
-            // Stores the port name to be used
-            this.portName = portName;
-            SerialClient = new SerialClient(portName);
+            //Instantiates SerialClient
+            SerialClient = new SerialClient();
             SerialClient.connectionMadeEvent += SerialClient_ConnectionMadeEvent;
 
             // Initializes the begging state of the state machine
@@ -181,7 +174,7 @@ namespace SerialLibrary
                             // Initialize data and write the first throw json
                             ThrowCtr = 0;
                             throwData = new ThrowData();
-                            throwData.WriteFirstThrowDataToJson(writeToJsonFilePath); //Initialize ThrowData
+                            throwData.WriteFirstThrowDataToJson(WRITETO_JSON_FILEPATH); //Initialize ThrowData
                             Console.WriteLine("Initializing First Throw Json File");
                             masp.SendMessageToArdy("HELLO");
                             ChangeStateTo(States.Initialized);
@@ -275,11 +268,11 @@ namespace SerialLibrary
                         string filePath;
                         if(throwTypeRequested == ThrowType.Saved)
                         {
-                            filePath = readableSavedPythonJsonFilePath;
+                            filePath = READABLE_SAVED_PYTHON_JSON_FILEPATH;
                         }
                         else
                         {
-                            filePath = readableJsonFilePath;
+                            filePath = READABLE_JSON_FILEPATH;
                         }
 
                         throwData = LoadThrowDataFromJson(filePath);
@@ -344,7 +337,7 @@ namespace SerialLibrary
                         {
                             apcq.SwitchConsumerActionTo(masp.ListenAndCheck);
                             ThrowRequested = false;
-                            throwData.WriteDataToJsonFile(writeToJsonFilePath);
+                            throwData.WriteDataToJsonFile(WRITETO_JSON_FILEPATH);
                             ChangeStateTo(States.Idle);
                         }
                         break;

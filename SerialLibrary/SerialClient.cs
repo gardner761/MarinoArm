@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading;
 using Diagnostics = System.Diagnostics;
@@ -15,7 +16,7 @@ namespace SerialLibrary
         #region Defines
 
         private string portName;
-        private int _baudRate;
+        private int baudRate;
         public SerialPort SerialPort;
         private Thread readSerialPortThread;
         private DateTime _lastReceive;
@@ -31,34 +32,13 @@ namespace SerialLibrary
 
         #endregion
 
-        #region Constructors
-        public SerialClient(string port)
-        {
-            portName = port;
-            _baudRate = 115200;
-            _lastReceive = DateTime.MinValue;
-
-            // Setup the thread to read the incoming serial data
-            stopReadingThreadRequest = false;
-            readSerialPortThread = new Thread(new ThreadStart(ReadSerialPortAndAddBytesToQueue));
-            readSerialPortThread.Priority = ThreadPriority.Normal;
-            readSerialPortThread.Name = "IncomingSerialReadingThread - ID:" + readSerialPortThread.ManagedThreadId;
-
-        }
-        public SerialClient(string Port, int baudRate)
-            : this(Port)
-        {
-            _baudRate = baudRate;
-        }
-        #endregion
-
         #region Properties
 
-        public string Port
+        public string PortName
         {
-            get 
-            { 
-                return portName; 
+            get
+            {
+                return portName;
             }
             private set
             {
@@ -67,7 +47,11 @@ namespace SerialLibrary
         }
         public int BaudRate
         {
-            get { return _baudRate; }
+            get { return baudRate; }
+            private set
+            {
+                baudRate = value;
+            }
         }
         public string ConnectionString
         {
@@ -80,16 +64,45 @@ namespace SerialLibrary
 
         #endregion
 
+        #region Constructors
+        public SerialClient()
+        {
+            _lastReceive = DateTime.MinValue;
+
+            // Setup the thread to read the incoming serial data
+            stopReadingThreadRequest = false;
+            readSerialPortThread = new Thread(new ThreadStart(ReadSerialPortAndAddBytesToQueue));
+            readSerialPortThread.Priority = ThreadPriority.Normal;
+            readSerialPortThread.Name = "IncomingSerialReadingThread - ID:" + readSerialPortThread.ManagedThreadId;
+        }
+        public SerialClient(string portName, int baudRate)
+            : this()
+        {
+            PortName = portName;
+            BaudRate = baudRate;
+        }
+        #endregion
+
         #region Methods
         #region Port Control
 
+        public static List<String> GetAvailableComPorts()
+        {
+            List<String> output = new List<String>();
+            string[] ports = SerialPort.GetPortNames();
+            foreach (string port in ports)
+            {
+                output.Add(port);
+            }
+            return output;
+        }
         public bool OpenConn()
         {
             try
             {
                 if (SerialPort == null)
                 {
-                    SerialPort = new SerialPort(portName, _baudRate, Parity.None);
+                    SerialPort = new SerialPort(PortName, BaudRate, Parity.None);
                 }
 
                 if (!SerialPort.IsOpen)
@@ -99,7 +112,6 @@ namespace SerialLibrary
                     SerialPort.Open();
                     if (SerialPort.IsOpen)
                     {
-                        readSerialPortThread = new Thread(new ThreadStart(ReadSerialPortAndAddBytesToQueue));
                         readSerialPortThread.Start(); /*Start The read serial Thread*/
                     }
                         
@@ -116,9 +128,8 @@ namespace SerialLibrary
         }
         public bool OpenConn(string port, int baudRate)
         {
-            portName = port;
-            _baudRate = baudRate;
-
+            PortName = port;
+            BaudRate = baudRate;
             return OpenConn();
         }
         public void CloseConn()
@@ -164,8 +175,8 @@ namespace SerialLibrary
             {
                 SerialPort.Dispose();
                 SerialPort = null;
-                Console.WriteLine($"Port {Port} is Closed and Disposed");
-                Port = null;
+                Console.WriteLine($"Port {PortName} is Closed and Disposed");
+                PortName = null;
 
             }
         }
