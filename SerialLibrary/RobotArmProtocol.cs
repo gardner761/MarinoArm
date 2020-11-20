@@ -246,6 +246,7 @@ namespace SerialLibrary
 
                         break;
                     }
+                // TODO - make throw start at 0deg
                 case States.Calculating:
                     {
 
