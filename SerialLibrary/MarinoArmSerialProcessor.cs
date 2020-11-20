@@ -94,7 +94,7 @@ namespace SerialLibrary
         public void ListenAndCheck(byte inByte)
         {
             char inChar = (char)inByte;
-            bool isEqual = false;
+
             if (inChar == '\n')
             {
                 if (showDiag)
@@ -103,7 +103,6 @@ namespace SerialLibrary
                 }
                 if (this.inString.Equals(CheckString))
                 {
-                    isEqual = true;
                     IsDetected = true;
                     if (this.inString.Equals("HELLO"))
                     {
