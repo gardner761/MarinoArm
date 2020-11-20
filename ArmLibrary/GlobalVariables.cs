@@ -12,11 +12,11 @@ namespace ArmLibrary
         /// <summary>
         /// C# writes to this file
         /// </summary>
-        public const string CSHARP_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Json\DataFromCSharp.json";
+        public const string CSHARP_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Json\temp\DataFromCSharp.json";
         /// <summary>
         /// Python writes to this file
         /// </summary>
-        public const string PYTHON_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Json\DataFromPython.json";
+        public const string PYTHON_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Json\temp\DataFromPython.json";
         /// <summary>
         /// Stored python filepath
         /// </summary>

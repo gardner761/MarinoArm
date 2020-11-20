@@ -2,45 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="99fa9c83-ffe9-4c7d-bcd4-892f05298e2a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.vs/MarinoArm/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/../.vs/MarinoArm/v16/.suo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../.vs/MarinoArm/v16/Browse.VC.db" beforeDir="false" afterPath="$PROJECT_DIR$/../.vs/MarinoArm/v16/Browse.VC.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ArmLibrary/GlobalVariables.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/GlobalVariables.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ArmLibrary/bin/Debug/ArmLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/bin/Debug/ArmLibrary.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ArmLibrary/bin/Debug/ArmLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/bin/Debug/ArmLibrary.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.csproj.FileListAbsolute.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../ArmLibrary/obj/Debug/ArmLibrary.pdb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CSharpTest.py" beforeDir="false" afterPath="$PROJECT_DIR$/Test Scripts/CSharpTest.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Code Fixes.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Code Fixes.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DataFromCSharp.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DataFromPython.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DataFromPython_saved.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/MarinoArm.py" beforeDir="false" afterPath="$PROJECT_DIR$/MarinoArm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TrialDataRecord.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/commandcalculator.py" beforeDir="false" afterPath="$PROJECT_DIR$/commandcalculator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testMe.py" beforeDir="false" afterPath="$PROJECT_DIR$/Test Scripts/testMe.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testeroo.py" beforeDir="false" afterPath="$PROJECT_DIR$/Test Scripts/testeroo.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/RobotArmProtocol.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/RobotArmProtocol.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/ArmLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/ArmLibrary.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/ArmLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/ArmLibrary.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/SerialLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/SerialLibrary.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/SerialLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/bin/Debug/SerialLibrary.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.csprojAssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.csprojAssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../SerialLibrary/obj/Debug/SerialLibrary.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/ArmLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/ArmLibrary.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/ArmLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/ArmLibrary.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/SerialLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/SerialLibrary.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/SerialLibrary.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/SerialLibrary.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/WPFUI.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/WPFUI.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/bin/Debug/WPFUI.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/bin/Debug/WPFUI.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/GeneratedInternalTypeHelper.g.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/GeneratedInternalTypeHelper.g.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.csprojAssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.csprojAssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI_MarkupCompile.lref" beforeDir="false" afterPath="$PROJECT_DIR$/../WPFUI/obj/Debug/WPFUI_MarkupCompile.lref" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
