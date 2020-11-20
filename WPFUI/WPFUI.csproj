@@ -226,7 +226,7 @@
       <Project>{fbc2314d-e235-4825-bae0-fd71059276a2}</Project>
       <Name>PythonIntegration</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SerialConnectLibrary\SerialLibrary.csproj">
+    <ProjectReference Include="..\SerialLibrary\SerialLibrary.csproj">
       <Project>{35b98926-8bd6-4ac6-a2ae-98e5db4b6e97}</Project>
       <Name>SerialLibrary</Name>
     </ProjectReference>

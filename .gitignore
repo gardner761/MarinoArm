@@ -692,3 +692,5 @@ Version.cpp
 /Python/__pycache__
 
 /Json/temp
+/SerialConnectLibrary/SerialConnectLibrary.csproj
+/SerialConnectLibrary/DeleteMeLibrary.sln
