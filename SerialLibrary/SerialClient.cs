@@ -191,7 +191,6 @@ namespace SerialLibrary
         /// </summary>
         private void ReadSerialPortAndAddBytesToQueue()
         {
-            // TODO - Stop and start this serial reading thread with RAP, or maybe just leave it?
             while (!stopReadingThreadRequest & readSerialPortThread.ThreadState == ThreadState.Running)
             {
                 while(addByteToQueueEvent==null)

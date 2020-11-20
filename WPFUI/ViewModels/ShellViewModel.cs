@@ -93,6 +93,7 @@ namespace WPFUI.ViewModels
         public ShellViewModel()
         {
             ShowSerialSelectionPage();
+            //ShowThrowingPage();
             ThrowingButtonVisibility = Visibility.Hidden;
             //AnimateColorBar();
             //StatusBarColor = Brushes.Orange;  
@@ -104,8 +105,8 @@ namespace WPFUI.ViewModels
         private void RobotArmProtocol_stateChangedEvent(string message)
         {
 
-            ConvertStateToStatusColor(serialSelectionViewModel.RobotArmProtocol.state);
-            if (serialSelectionViewModel.RobotArmProtocol.state == States.Idle)
+            ConvertStateToStatusColor(serialSelectionViewModel.RobotArmProtocol.State);
+            if (serialSelectionViewModel.RobotArmProtocol.State == States.Idle)
             {
                 ThrowingButtonVisibility = Visibility.Visible;
             }

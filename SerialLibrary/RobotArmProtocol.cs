@@ -33,12 +33,10 @@ namespace SerialLibrary
         public int refreshPlotCount;
 
         AsyncProducerConsumerQueue<byte> apcq;
-        public States state; 
  
-        private static double throwDuration_sec = 2.0;
-        static int arraySize=(int)((double)GlobalVariables.SAMPLING_FREQUENCY*throwDuration_sec) + 1; //1100 is close to the max for Unos, not sure about Megas
+        static int arraySize=GlobalVariables.ARRAY_SIZE; //1100 is close to the max for Unos, not sure about Megas
         int timeStep_ms = 1000 / GlobalVariables.SAMPLING_FREQUENCY;
-        private ThrowData throwData;
+       
         
         System.Timers.Timer timer;
 
@@ -48,6 +46,7 @@ namespace SerialLibrary
 
         #region Properties
 
+        private ThrowData throwData;
         public ThrowData ThrowData
         {
             get 
@@ -56,6 +55,7 @@ namespace SerialLibrary
             }
             private set
             {
+                throwData = value;
             }
         }
 
@@ -74,6 +74,15 @@ namespace SerialLibrary
         public bool ThrowRequested { get; set; }
 
         public SerialClient SerialClient { get; set; }
+
+        private States state;
+
+        public States State
+        {
+            get { return state; }
+            private set { state = value; }
+        }
+
 
         #endregion
 
@@ -110,7 +119,7 @@ namespace SerialLibrary
             SerialClient.connectionMadeEvent += SerialClient_ConnectionMadeEvent;
 
             // Initializes the begging state of the state machine
-            state = States.OnStartup;
+            State = States.OnStartup;
         }
 
         #endregion
@@ -118,9 +127,9 @@ namespace SerialLibrary
         #region State Machine
         private void ChangeStateTo(States nextstate)
         {
-            state = nextstate;
+            State = nextstate;
             _stepNumber = 0;
-            string message = state.ToString();
+            string message = State.ToString();
             Console.WriteLine($"RAP State is: {message}");
             if (stateChangedEvent != null)
             {
@@ -136,7 +145,6 @@ namespace SerialLibrary
             }
             //Console.WriteLine("Timer Elapsed");
         }
-
         public void SerialClient_ConnectionMadeEvent()
         {
             //Starts the periodic clock to execute the UpdateStateMachine method
@@ -157,7 +165,7 @@ namespace SerialLibrary
         {
             isCurrentlyScanning = true;
 
-            switch (state)
+            switch (State)
             {
                 case States.OnStartup:
                     {
@@ -173,8 +181,8 @@ namespace SerialLibrary
 
                             // Initialize data and write the first throw json
                             ThrowCtr = 0;
-                            throwData = new ThrowData();
-                            throwData.WriteFirstThrowDataToJson(CSHARP_JSON_FILEPATH); //Initialize ThrowData
+                            ThrowData = new ThrowData();
+                            ThrowData.WriteFirstThrowDataToJson(CSHARP_JSON_FILEPATH); //Initialize ThrowData
                             Console.WriteLine("Initializing First Throw Json File");
                             masp.SendMessageToArdy("HELLO");
                             ChangeStateTo(States.Initialized);
@@ -276,38 +284,43 @@ namespace SerialLibrary
                             filePath = PYTHON_JSON_FILEPATH;
                         }
 
-                        throwData = LoadThrowDataFromJson(filePath);
+                        ThrowData = LoadThrowDataFromJson(filePath);
 
-                        if (throwTypeRequested == ThrowType.Saved)
-                        {
-                            throwData.Data.TrialNumber = ThrowCtr;
-                        }
-                        // TODO - error gets thrown if doing rerun then switching back to calculate mode.
                         // TODO - make throw start at zero.
-                        if (throwData.Data.TrialNumber != ThrowCtr)
-                        {
-                            errorMsg = $"Error: mismatch between internal throw counter and python counter: {ThrowCtr} to {throwData.Data.TrialNumber}";
-                            ChangeStateTo(States.Error);
-                        }
-                        else
-                        {
-                            ChangeStateTo(States.Sending);
-                        }
 
+                        ChangeStateTo(States.Sending);
+          
                         break;
                     }
                 case States.Sending:
                     {
-                        if (_stepNumber == 0) //Send throwData to arduino
+                        if (throwTypeRequested != ThrowType.Calculated)
+                        {
+                            ThrowData.Data.TrialNumber = ThrowCtr;
+                        }
+
+                        if (ThrowData.Data.TrialNumber != ThrowCtr)
+                        {
+                            errorMsg = $"Error: mismatch between internal throw counter and python counter: {ThrowCtr} to {ThrowData.Data.TrialNumber}";
+                            ChangeStateTo(States.Error);
+                        }
+
+                        //Wipe the sensor data prior to starting the throw
+                        ThrowData.Data.Shoulder.Sensor = null;
+                        ThrowData.Data.Elbow.Sensor = null;
+
+                        //Send throwData to arduino
+                        if (_stepNumber == 0) 
                         {
                             masp.CheckString = "START";
                             masp.IsDetected = false;
                             apcq.SwitchConsumerActionTo(masp.ListenAndCheck);
-                            masp.SendNewThrowDataToArdy(throwData);
+                            masp.SendNewThrowDataToArdy(ThrowData);
                             _stepNumber = 10;
                         }
 
-                        if (_stepNumber == 10 & masp.IsDetected) //Wait for Arduino to reply with "START", then start adding new data to Byte list
+                        //Wait for Arduino to reply with "START", then start adding new data to Byte list
+                        if (_stepNumber == 10 & masp.IsDetected) 
                         {
                             masp.ShoulderSensorData.Clear();
                             masp.IsDetected = false;
@@ -327,7 +340,7 @@ namespace SerialLibrary
                             masp.SendMessageToArdy("RECEIVED");
                             masp.IsFinished = false;
                             apcq.SwitchConsumerActionTo(masp.Listen);
-                            throwData.Data.Shoulder.Sensor = masp.ShoulderSensorData.ToArray();
+                            ThrowData.Data.Shoulder.Sensor = masp.ShoulderSensorData.ToArray();
                             timer.Start();
                             ChangeStateTo(States.Done);
                         }
@@ -339,7 +352,7 @@ namespace SerialLibrary
                         {
                             apcq.SwitchConsumerActionTo(masp.ListenAndCheck);
                             ThrowRequested = false;
-                            throwData.WriteDataToJsonFile(CSHARP_JSON_FILEPATH);
+                            ThrowData.WriteDataToJsonFile(CSHARP_JSON_FILEPATH);
                             ChangeStateTo(States.Idle);
                         }
                         break;
@@ -356,6 +369,11 @@ namespace SerialLibrary
         #endregion
 
         #region Helper Methods
+
+        public void SavePythonJson()
+        {
+            ThrowData.WriteDataToJsonFile(GlobalVariables.SAVED_PYTHON_JSON_FILEPATH);
+        }
 
         private byte[] BuildFakeThrowCommandData()
         {

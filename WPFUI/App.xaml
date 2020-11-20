@@ -7,7 +7,6 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary>
                     <local:Bootstrapper x:Key="Bootstrapper"/>
-
                     <Style x:Key="RoundButtonTemplate" TargetType="Button">
                         <Setter Property="Background" Value="DarkViolet" />
                         <Setter Property="Foreground" Value="White"/>

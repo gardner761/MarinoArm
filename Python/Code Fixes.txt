@@ -1,1 +1,2 @@
 #1 (system) using saved python file results on miscalculated next throw.
+#2 (python) make throw start at 0 deg

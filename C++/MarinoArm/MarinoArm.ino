@@ -46,7 +46,7 @@ bool flag, disp = false;
 int stillSum;
 bool isCalibration = false;
 int arraySize; //updated after program runs, is provided by CSharp
-const int sizer = 205; //this should be larger than what the arraySize value is
+const int sizer = 326; //this should be larger than what the arraySize value is
 byte psiDataInArray[sizer]; //WARNING!!!!! CHANGE THIS BACK TO match the RAP arraySize
 byte ipDataArray[sizer];
 bool switchSolenoidDataArray[sizer];
@@ -98,8 +98,14 @@ void setup()
   }
 
 
-
+  if(arraySize>sizer)
+  {
+    serialM.sendMessage("arraySize is larger than the alloted size in arduino, please fix in arduino code");
+  }
+  else
+  {
   ChangeStepNumber(0);
+  }
 
 }
 

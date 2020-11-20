@@ -13,10 +13,8 @@ using SciChart.Charting2D.Interop;
 using System.Security.Cryptography;
 
 
-
 namespace WPFUI.ViewModels
 {
-    // TODO - add option to update saved throw python json to be the last throw's python json
     class ThrowingViewModel : Screen
     {
         #region Defines
@@ -39,94 +37,6 @@ namespace WPFUI.ViewModels
         RobotArmProtocol robotArmProtocol;
 
         private const int clearPlotCtr=2;
-
-        #endregion
-
-        #region Constructors
-        public ThrowingViewModel()
-        {
-            if (PlotModel == null)
-            {
-                PlotModel = new PlotModel();
-                int[] minmax = { 0, 2010, -20, 200 };
-                SetupPlotModel(PlotModel, "Joint Trajectory vs. Time","Angle (deg)", minmax);
-            }
-
-            if (CmdPlotModel == null)
-            {
-                CmdPlotModel = new PlotModel();
-                int[] minmax = { 0, 2010, -50, 50 };
-                SetupPlotModel(CmdPlotModel, "Cmd Input vs. Time", "Cmd (psi)",minmax);
-            }
-        }
-
-        public ThrowingViewModel(RobotArmProtocol rap)
-            : this()
-        {
-            robotArmProtocol = rap;
-            robotArmProtocol.refreshPlotCount = refreshPlotCount;
-            robotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
-            robotArmProtocol.masp.updatedDataEvent += RobotArmProtocol_updatedDataEvent;
-
-            CalculateChecked = true;
-        }
-
-        #endregion
-
-        #region Event Handlers
-        private void RobotArmProtocol_stateChangedEvent(string message)
-        {
-            switch (robotArmProtocol.state)
-            {
-                case States.OnStartup:
-                    break;
-                case States.Initialized:
-                    break;
-                case States.Idle:
-                    break;
-                case States.TaskPlanning:
-                    if (ThrowCtr % clearPlotCtr == 1 & PlotModel != null)
-                    {
-                        ClearPlot(PlotModel);
-                        ClearPlot(CmdPlotModel);
-                    }
-                        break;
-                case States.Calculating:
-                    break;
-                case States.Sending:
-                    if (ThrowCtr % clearPlotCtr == 1 & PlotModel != null)
-                    {
-                        var refPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Ref);
-                        BuildLineOnPlot(PlotModel, LineType.ShoulderRef, refPoints);
-                    }
-                    var cmdPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Cmd);
-                    BuildLineOnPlot(CmdPlotModel, LineType.ShoulderCmd, cmdPoints);
-                    break;
-                case States.Receiving:
-                    break;
-                case States.Done:
-                    StartButtonVisibility = Visibility.Visible;
-                    RerunIsEnabled = true;
-                    break;
-                case States.Error:
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void RobotArmProtocol_updatedDataEvent(List<Point> data)
-        {
-            if (!isBuiltNewLine)
-            {
-                BuildLineOnPlot(PlotModel, LineType.ShoulderSensor, data);
-                isBuiltNewLine = true;
-            }
-            else
-            {
-                AddPointsToCurrentLine(PlotModel, data);
-            }
-        }
 
         #endregion
 
@@ -193,13 +103,13 @@ namespace WPFUI.ViewModels
         }
         public PlotModel PlotModel
         {
-            get 
-            { 
-                return plotModel; 
+            get
+            {
+                return plotModel;
             }
-            set 
-            { 
-                plotModel = value; 
+            set
+            {
+                plotModel = value;
                 NotifyOfPropertyChange(() => PlotModel);
             }
         }
@@ -226,17 +136,124 @@ namespace WPFUI.ViewModels
                 robotArmProtocol.ThrowCtr = value;
             }
         }
-        private Visibility _startButtonVisibility;
+        private Visibility startButtonVisibility;
         public Visibility StartButtonVisibility
         {
             get
             {
-                return _startButtonVisibility;
+                return startButtonVisibility;
             }
             set
             {
-                _startButtonVisibility = value;
+                startButtonVisibility = value;
                 NotifyOfPropertyChange(() => StartButtonVisibility);
+            }
+        }
+
+        private Visibility saveButtonVisibility;
+
+        public Visibility SaveButtonVisibility
+        {
+            get { 
+                return saveButtonVisibility; 
+            }
+            set { 
+                saveButtonVisibility = value;
+                NotifyOfPropertyChange(() => SaveButtonVisibility);
+            }
+        }
+
+
+        #endregion
+
+        #region Constructors
+        public ThrowingViewModel()
+        {
+            if (PlotModel == null)
+            {
+                PlotModel = new PlotModel();
+                int[] minmax = { 0, GlobalVariables.ARRAY_SIZE * 1000/GlobalVariables.SAMPLING_FREQUENCY, -20, 200 };
+                SetupPlotModel(PlotModel, "Joint Trajectory vs. Time","Angle (deg)", minmax);
+            }
+
+            if (CmdPlotModel == null)
+            {
+                CmdPlotModel = new PlotModel();
+                int[] minmax = { 0, GlobalVariables.ARRAY_SIZE * 1000 / GlobalVariables.SAMPLING_FREQUENCY, -50, 50 };
+                SetupPlotModel(CmdPlotModel, "Cmd Input vs. Time", "Cmd (psi)", minmax);
+            }
+            SaveButtonVisibility = Visibility.Hidden;
+        }
+
+        public ThrowingViewModel(RobotArmProtocol rap)
+            : this()
+        {
+            robotArmProtocol = rap;
+            robotArmProtocol.refreshPlotCount = refreshPlotCount;
+            robotArmProtocol.stateChangedEvent += RobotArmProtocol_stateChangedEvent;
+            robotArmProtocol.masp.updatedDataEvent += RobotArmProtocol_updatedDataEvent;
+            
+            CalculateChecked = true;
+        }
+
+        #endregion
+
+        #region Event Handlers
+        private void RobotArmProtocol_stateChangedEvent(string message)
+        {
+            switch (robotArmProtocol.State)
+            {
+                case States.OnStartup:
+                    break;
+                case States.Initialized:
+                    break;
+                case States.Idle:
+                    break;
+                case States.TaskPlanning:
+                    SaveButtonVisibility = Visibility.Hidden;
+                    if (ThrowCtr % clearPlotCtr == 1 & PlotModel != null)
+                    {
+                        ClearPlot(PlotModel);
+                        ClearPlot(CmdPlotModel);
+                    }
+                        break;
+                case States.Calculating:
+                    break;
+                case States.Loading:
+                    break;
+                case States.Sending:
+                    if (ThrowCtr % clearPlotCtr == 1 & PlotModel != null)
+                    {
+                        var refPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Ref);
+                        BuildLineOnPlot(PlotModel, LineType.ShoulderRef, refPoints);
+                    }
+                    var cmdPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Cmd);
+                    BuildLineOnPlot(CmdPlotModel, LineType.ShoulderCmd, cmdPoints);
+                    break;
+                case States.Receiving:
+                    break;
+                case States.Done:
+                    StartButtonVisibility = Visibility.Visible;
+                    SaveButtonVisibility = Visibility.Visible;
+                    RerunIsEnabled = true;
+                    break;
+                case States.Error:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void RobotArmProtocol_updatedDataEvent(List<Point> data)
+        {
+            if (!isBuiltNewLine)
+            {
+                BuildLineOnPlot(PlotModel, LineType.ShoulderSensor, data);
+                isBuiltNewLine = true;
+            }
+            else
+            {
+                AddPointsToCurrentLine(PlotModel, data);
             }
         }
 
@@ -443,6 +460,10 @@ namespace WPFUI.ViewModels
             StartButtonVisibility = Visibility.Hidden;
             robotArmProtocol.ThrowRequested = true;
             isBuiltNewLine = false;
+        }
+        public void SaveButton()
+        {
+                robotArmProtocol.SavePythonJson();
         }
 
         #endregion

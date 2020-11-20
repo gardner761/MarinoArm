@@ -8,6 +8,7 @@ namespace ArmLibrary
 {
     public static class GlobalVariables
     {
+        public const int ARRAY_SIZE = 326;
         public const int SAMPLING_FREQUENCY = 100;
         /// <summary>
         /// C# writes to this file
