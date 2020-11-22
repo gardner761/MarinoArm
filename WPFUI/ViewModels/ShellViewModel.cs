@@ -92,11 +92,11 @@ namespace WPFUI.ViewModels
 
         public ShellViewModel()
         {
+            //ShowPageOne();
             ShowSerialSelectionPage();
             //ShowThrowingPage();
+
             ThrowingButtonVisibility = Visibility.Hidden;
-            //AnimateColorBar();
-            //StatusBarColor = Brushes.Orange;  
         }
 
         #endregion
@@ -156,6 +156,7 @@ namespace WPFUI.ViewModels
 
         #endregion
 
+        #region Helper Methods
         private void ConvertStateToStatusColor(States rapState)
         {
             switch (rapState)
@@ -226,7 +227,6 @@ namespace WPFUI.ViewModels
             //System.Environment.Exit(0);
         }
 
-        
         private bool CheckForActiveThreads()
         {
             bool output = false;
@@ -246,8 +246,6 @@ namespace WPFUI.ViewModels
             }
             return output;
         }
-
-
-
+        #endregion
     }
 }

@@ -14,6 +14,7 @@
     <UserControl.Resources>
         <BitmapImage x:Key="SaveIconGray" UriSource="/Resources/SaveIconGray.png"/>
         <BitmapImage x:Key="SaveIconGreen" UriSource="/Resources/SaveIconGreen.png"/>
+        <Color x:Key="fbk" R="4" G="111" B="111"/>
     </UserControl.Resources>
     <Grid >
 
@@ -82,15 +83,37 @@
              Content="RERUN"
              IsEnabled="{Binding RerunIsEnabled, Mode=OneWay}"/>
 
-        <Button Grid.Row="3" Grid.Column="8" Margin="50 0 0 0"
+        <Button Grid.Row="3" Grid.Column="8"
             Name="SaveButton"
+            BorderBrush="{x:Null}" 
+            Foreground="{x:Null}" 
+            HorizontalAlignment="Left" 
+            VerticalAlignment="Bottom" 
             Width="35" 
-            Height="35"
-            BorderThickness="0"
-            HorizontalAlignment="Left"
+            Height="35" 
             Visibility="{Binding SaveButtonVisibility, Mode=OneWay}"
-            Background="Transparent">
+            HorizontalContentAlignment="Left" 
+            Margin="50,0,0,0">
             <Image Source="{Binding SaveIconImage, Mode=OneWay,FallbackValue={StaticResource SaveIconGray}}"/>
+            <Button.Style>
+                <Style TargetType="{x:Type Button}">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type Button}">
+                                <Border Background="{TemplateBinding Background}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{Binding ColorIsMouseOver, Mode=OneWay}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
         </Button>
 
         <oxy:PlotView Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="6"

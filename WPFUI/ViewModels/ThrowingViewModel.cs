@@ -11,7 +11,7 @@ using SerialLibrary;
 using static SerialLibrary.RobotArmProtocol;
 using SciChart.Charting2D.Interop;
 using System.Security.Cryptography;
-
+using System.Windows.Media;
 
 namespace WPFUI.ViewModels
 {
@@ -39,25 +39,62 @@ namespace WPFUI.ViewModels
 
         RobotArmProtocol robotArmProtocol;
 
-        private const int clearPlotCtr=2;
+        /// <summary>
+        /// Determines the refresh rate of the plots
+        /// </summary>
+        private int clearPlotCtr=2;
+
+        private SolidColorBrush saveButtonBackgroundBrush = Brushes.Azure;
 
         #endregion
 
         #region Properties
 
-        private string saveIconImage = saveIconGray;
+        #region Save Button
 
-        public string SaveIconImage
+        private SolidColorBrush colorIsMouseOver;
+        public SolidColorBrush ColorIsMouseOver
         {
-            get { return saveIconImage; }
+            get { return colorIsMouseOver; }
             set 
             { 
-                saveIconImage = value;
-                NotifyOfPropertyChange(() => SaveIconImage);
+                colorIsMouseOver = value;
+                NotifyOfPropertyChange(() => ColorIsMouseOver);
             }
         }
 
+        private string saveButtonImage = saveIconGray;
+        public string SaveButtonImage
+        {
+            get { return saveButtonImage; }
+            set 
+            { 
+                saveButtonImage = value;
+                NotifyOfPropertyChange(() => SaveButtonImage);
+            }
+        }
+        private Visibility saveButtonVisibility;
+        public Visibility SaveButtonVisibility
+        {
+            get
+            {
+                return saveButtonVisibility;
+            }
+            set
+            {
+                saveButtonVisibility = value;
+                if (value == Visibility.Visible)
+                {
+                    SaveButtonImage = saveIconGray;
+                    ColorIsMouseOver = saveButtonBackgroundBrush;
+                }
+                NotifyOfPropertyChange(() => SaveButtonVisibility);
+            }
+        }
 
+        #endregion
+
+        #region Radio Button Group
         private bool calculateChecked;
         public bool CalculateChecked
         {
@@ -117,6 +154,9 @@ namespace WPFUI.ViewModels
                 NotifyOfPropertyChange(() => RerunIsEnabled);
             }
         }
+
+        #endregion
+
         public PlotModel PlotModel
         {
             get
@@ -163,23 +203,6 @@ namespace WPFUI.ViewModels
             {
                 startButtonVisibility = value;
                 NotifyOfPropertyChange(() => StartButtonVisibility);
-            }
-        }
-
-        private Visibility saveButtonVisibility;
-
-        public Visibility SaveButtonVisibility
-        {
-            get { 
-                return saveButtonVisibility; 
-            }
-            set { 
-                saveButtonVisibility = value;
-                if(value == Visibility.Visible)
-                {
-                    SaveIconImage = saveIconGray;
-                }
-                NotifyOfPropertyChange(() => SaveButtonVisibility);
             }
         }
 
@@ -484,7 +507,8 @@ namespace WPFUI.ViewModels
         public void SaveButton()
         {
             robotArmProtocol.SavePythonJson();
-            SaveIconImage = saveIconGreen;
+            SaveButtonImage = saveIconGreen;
+            ColorIsMouseOver = Brushes.Transparent;
         }
 
         #endregion

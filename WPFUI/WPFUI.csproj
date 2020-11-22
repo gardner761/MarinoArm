@@ -222,7 +222,6 @@
     <Content Include="Resources\SaveIconGreen.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Resource Include="Views\SaveIconGray.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ArmLibrary\ArmLibrary.csproj">

@@ -409,6 +409,8 @@ namespace SerialLibrary
             }
             return b;
         }
+
+        // TODO - look at the usage of this function, use it to populate initial CSharp Json, but then all time series shoudld be referenced from Json after that.
         public int[] CreateTimeSeries(int arrayLength)
         {
             var timeArray = new int[arrayLength];
