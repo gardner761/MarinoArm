@@ -12,7 +12,8 @@
              Background="#FF121212"
              Width="1060">
     <UserControl.Resources>
-        <Image x:Key="SaveIconImage" Source="/Resources/SaveIconGray.png"/>
+        <BitmapImage x:Key="SaveIconGray" UriSource="/Resources/SaveIconGray.png"/>
+        <BitmapImage x:Key="SaveIconGreen" UriSource="/Resources/SaveIconGreen.png"/>
     </UserControl.Resources>
     <Grid >
 
@@ -88,12 +89,8 @@
             BorderThickness="0"
             HorizontalAlignment="Left"
             Visibility="{Binding SaveButtonVisibility, Mode=OneWay}"
-            Content="{StaticResource SaveIconImage}">
-            <Button.Background>
-                <ImageBrush ImageSource="SaveIconGray.png" 
-                            Stretch="UniformToFill" 
-                            Opacity="0.75"/>
-            </Button.Background>
+            Background="Transparent">
+            <Image Source="{Binding SaveIconImage, Mode=OneWay,FallbackValue={StaticResource SaveIconGray}}"/>
         </Button>
 
         <oxy:PlotView Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="6"

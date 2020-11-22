@@ -22,6 +22,9 @@ namespace WPFUI.ViewModels
         private PlotModel plotModel;
         private int refreshPlotCount = 3; //amount of trials to run until the plot is refreshed
         private PlotModel cmdPlotModel;
+
+        private static String saveIconGray = "/Resources/SaveIconGray.png";
+        private static String saveIconGreen = "/Resources/SaveIconGreen.png";
         
         bool isBuiltNewLine;
         public enum LineType
@@ -41,6 +44,19 @@ namespace WPFUI.ViewModels
         #endregion
 
         #region Properties
+
+        private string saveIconImage = saveIconGray;
+
+        public string SaveIconImage
+        {
+            get { return saveIconImage; }
+            set 
+            { 
+                saveIconImage = value;
+                NotifyOfPropertyChange(() => SaveIconImage);
+            }
+        }
+
 
         private bool calculateChecked;
         public bool CalculateChecked
@@ -159,6 +175,10 @@ namespace WPFUI.ViewModels
             }
             set { 
                 saveButtonVisibility = value;
+                if(value == Visibility.Visible)
+                {
+                    SaveIconImage = saveIconGray;
+                }
                 NotifyOfPropertyChange(() => SaveButtonVisibility);
             }
         }
@@ -463,7 +483,8 @@ namespace WPFUI.ViewModels
         }
         public void SaveButton()
         {
-                robotArmProtocol.SavePythonJson();
+            robotArmProtocol.SavePythonJson();
+            SaveIconImage = saveIconGreen;
         }
 
         #endregion
