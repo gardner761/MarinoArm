@@ -15,6 +15,10 @@ using Google.Protobuf.WellKnownTypes;
 using System.Timers;
 using static ArmLibrary.GlobalVariables;
 
+// TODO - work on time series populating json at initialization and incorporate into ThrowData
+
+// TODO - elbow data integration
+
 namespace SerialLibrary
 {
     public class RobotArmProtocol
