@@ -4,9 +4,10 @@ from ThrowData import *
 import numpy as np
 import matplotlib.pyplot as plt
 import config
+import datetime
 
 # Settings
-runSim = True  # disable this normally, use just for simulation
+runSim = False  # disable this normally, use just for simulation
 
 # Defines
 isFirstThrow = False
@@ -26,14 +27,14 @@ if dataIn.TrialNumber == 0:
 
 print(f"   TrialNumber: {dataIn.TrialNumber}")
 print(f"   Sampling Frequency: {dataIn.SamplingFrequency} Hz")
+print(f"   Array Size: {dataIn.ArraySize} Hz")
 print('\n', '\n')
 
 
 # 2. Calculate new throw data and load it to dataOut object
 print("-----------------------------------------------------------------------------------")
 print("Step 2 - Calculate new throw data and load it to dataOut object")
-# commandcalculator.loadrefsignal(dataIn.SamplingFrequency)
-u, a, ilc, time, r = commandcalculator.calcthrow(dataIn, dataIn.SamplingFrequency)
+u, a, ilc, time, r = commandcalculator.calcthrow(dataIn)
 print(f"Length of Control Signal Array: {np.size(u)}")
 
 
@@ -47,10 +48,23 @@ dataOut.TrialNumber = dataIn.TrialNumber + 1
 print(f"Increased the trial number for Python Json by one, it is now: {dataOut.TrialNumber}")
 cmdSh = u[0, :].tolist()
 estSh = a[0, :].tolist()
-refSh = commandcalculator.refY.tolist()
+# TODO - uncomment below
+# cmdEl = u[1, :].tolist()
+# estEl = a[1, :].tolist()
+t = time.tolist()
+refSh = commandcalculator.ref_shoulder.tolist()
+refEl = commandcalculator.ref_elbow.tolist()
 dataOut.Shoulder.Cmd = cmdSh
 dataOut.Shoulder.Est = estSh
 dataOut.Shoulder.Ref = refSh
+dataOut.Shoulder.Time = t
+# TODO - uncomment below
+# dataOut.Elbow.Cmd = cmdEl
+# dataOut.Elbow.Est = estEl
+dataOut.Elbow.Ref = refEl
+dataOut.Elbow.Time = t
+dataOut.DateCalculated = datetime.datetime.now()
+timenow = datetime.datetime.now()
 fileOut = config.PYTHON_JSON_FILEPATH
 dataOut.writefile(fileOut)
 
@@ -62,6 +76,8 @@ if runSim:
     dataSim = ThrowData()
     dataSim.readfile(fileOut)
     dataSim.Shoulder.Sensor = y[0, :].tolist()
+    dataSim.DateExecuted = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"DateExecuted: {dataSim.DateExecuted}")
     # dataIn.Shoulder.Cmd = u[0, :].tolist()
     # dataIn.Shoulder.Ref = r.tolist()
     # dataIn.TrialNumber = dataIn.TrialNumber + 1

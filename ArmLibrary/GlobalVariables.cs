@@ -8,7 +8,8 @@ namespace ArmLibrary
 {
     public static class GlobalVariables
     {
-        public const int ARRAY_SIZE = 326;
+        // TODO - convert back
+        public const int ARRAY_SIZE = 101; //326; 
         public const int SAMPLING_FREQUENCY = 100;
         /// <summary>
         /// C# writes to this file
@@ -21,6 +22,6 @@ namespace ArmLibrary
         /// <summary>
         /// Stored python filepath
         /// </summary>
-        public const string SAVED_PYTHON_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Json\Saved\DataFromPython_saved.json";
+        public const string SAVED_PYTHON_JSON_FILEPATH = @"C:\Users\gardn\source\repos\MarinoArm\Json\Saved\SavedDataFromCsharp.json";
     }
 }

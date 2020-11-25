@@ -251,6 +251,7 @@ namespace WPFUI.ViewModels
                 case States.Initialized:
                     break;
                 case States.Idle:
+                    StartButtonVisibility = Visibility.Visible;
                     break;
                 case States.TaskPlanning:
                     SaveButtonVisibility = Visibility.Hidden;
@@ -276,7 +277,6 @@ namespace WPFUI.ViewModels
                 case States.Receiving:
                     break;
                 case States.Done:
-                    StartButtonVisibility = Visibility.Visible;
                     SaveButtonVisibility = Visibility.Visible;
                     RerunIsEnabled = true;
                     break;

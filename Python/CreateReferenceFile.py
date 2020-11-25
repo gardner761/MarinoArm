@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 diag = False
 
 
-def ref(fs):
+def ref(fs, arraysize):
+    timeStep = 1.0 / fs
     tSh_startFromZero = np.array([0.0, 0.1, 0.2, 0.5,
                                   0.8, 0.9, 1.0, 1.2])
     thetaSh_startFromZero = 180.0/np.pi*np.array([0.0, 0.025, 0.075, 0.45,
@@ -28,18 +29,36 @@ def ref(fs):
     tSh = np.append(tSh_startFromZero, tSh_primary_shifted)
     thetaSh = np.append(thetaSh_startFromZero, thetaSh_primary)
 
-    timeStep = 1.0/fs
-    xs = np.arange(tSh[0], tSh.max() + timeStep, timeStep)
-    x = tSh
-    y = thetaSh
-    cs = CubicSpline(x, y)
-    ys = cs(xs)
-    print(f"N = {len(ys)}")
+    tEl = np.array([0.0, 0.1, 1.0])
+    thetaEl = np.array([.7, .75, .8])
+    print(f"arraysize: {arraysize}")
+    xs = np.arange(tSh[0], arraysize*timeStep, timeStep)
+    print(f"xs: {xs}")
+    if len(xs) != arraysize:
+        print("Something is wrong with reference time series creation")
+
+    x_sh = tSh
+    x_el = tEl
+    y_sh = thetaSh
+    y_el = thetaEl
+    cs_sh = CubicSpline(x_sh, y_sh)
+    print(f"x_sh: {x_sh}")
+    print(f"y_sh: {y_sh}")
+    cs_el = CubicSpline(x_el, y_el)
+    ys_sh = cs_sh(xs)
+    ys_el = cs_el(xs)
+
     if diag:
         plt.figure(figsize=(6.5, 4))
-        plt.plot(x, y, 'o', label='data')
-        plt.plot(xs, ys, label="Spline")
+        plt.plot(x_sh, y_sh, 'o', label='data')
+        plt.plot(xs, ys_sh, label="Shoulder")
+        plt.show()
+        plt.figure(figsize=(6.5, 4))
+        plt.plot(x_el, y_el, 'o', label='data')
+        plt.plot(xs, ys_el, label="Elbow")
         plt.show()
 
+    return xs, ys_sh, ys_el
 
-    return xs, ys
+
+# ref(100, 101)

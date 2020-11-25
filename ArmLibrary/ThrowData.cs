@@ -1,5 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Web.Script.Serialization;
+using System.Windows;
+using Newtonsoft.Json;
 
 namespace ArmLibrary
 {
@@ -12,8 +15,12 @@ namespace ArmLibrary
         {
             public int TrialNumber { get; set; } //read by Python Script; it tells the gILC to start new (assign zeros to estimation)
             public int SamplingFrequency { get; set; }
+            public DateTime DateCalculated { get; set; }
+            public DateTime DateExecuted { get; set; }
+            public int ArraySize { get; set; }
             public JointStruct Shoulder;
             public JointStruct Elbow;
+            
         }
         public struct JointStruct
         {
@@ -21,6 +28,7 @@ namespace ArmLibrary
             public float[] Est { get; set; }
             public float[] Ref { get; set; }
             public int[] Sensor { get; set; }
+            public float[] Time { get; set; }
         }
 
         #endregion
@@ -30,19 +38,22 @@ namespace ArmLibrary
         {
             //Data.Shoulder.Sensor = new int[] { 1, 13, 33, 77, 3, 13, 19 };
             //Data.Elbow.Sensor = new int[] { 77, 77, 77, 77, 77, 77, 77 };
+            //Data.DateCalculated = DateTime.Now;
+            //Data.DateExecuted = Data.DateCalculated;
         }
 
         #endregion
 
-        #region Methods
+            #region Methods
 
-        /// <summary>
-        /// Sets the trial number to zero, sets the sampling frequency, and Initializes the Json file to be used by Python for the first throw
-        /// </summary>
-        /// <param name="path"></param>
-        public void WriteFirstThrowDataToJson(string path)
+            /// <summary>
+            /// Sets the trial number to zero, sets the sampling frequency, and Initializes the Json file to be used by Python for the first throw
+            /// </summary>
+            /// <param name="path"></param>
+            public void WriteFirstThrowDataToJson(string path)
         {
             Data.TrialNumber = 0;
+            Data.ArraySize = GlobalVariables.ARRAY_SIZE;
             Data.SamplingFrequency = GlobalVariables.SAMPLING_FREQUENCY;
             WriteDataToJsonFile(path);
         }
@@ -53,8 +64,8 @@ namespace ArmLibrary
         /// <param name="path"></param>
         public void WriteDataToJsonFile(string path)
         {
-            var json_serializer = new JavaScriptSerializer();
-            string jsonstring = json_serializer.Serialize(Data);
+            var settings = new JsonSerializerSettings { DateFormatString = "yyyy-MM-ddTHH:mm:ss.ffffffZ" };
+            var jsonstring = JsonConvert.SerializeObject(Data, settings);
             File.WriteAllText(path, jsonstring);
         }
 
@@ -68,6 +79,7 @@ namespace ArmLibrary
             var json_serializer = new JavaScriptSerializer();
             Data = json_serializer.Deserialize<DataStruct>(json);
         }
+        
 
         #endregion
     }

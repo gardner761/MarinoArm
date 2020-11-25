@@ -14,10 +14,12 @@ using System.Configuration;
 using Google.Protobuf.WellKnownTypes;
 using System.Timers;
 using static ArmLibrary.GlobalVariables;
+using System.IO;
+using System.Windows.Forms;
 
 // TODO - work on time series populating json at initialization and incorporate into ThrowData
 
-// TODO - elbow data integration
+// TODO - elbow data integration, 
 
 namespace SerialLibrary
 {
@@ -224,6 +226,7 @@ namespace SerialLibrary
                         {
                             ThrowCtr++;
                             throwTypeRequested = ThrowTypeSelected;
+                            ThrowRequested = false;
                             ChangeStateTo(States.TaskPlanning);
                         }
 
@@ -288,11 +291,25 @@ namespace SerialLibrary
                             filePath = PYTHON_JSON_FILEPATH;
                         }
 
-                        ThrowData = LoadThrowDataFromJson(filePath);
-
-                        // TODO - make throw start at zero.
-
-                        ChangeStateTo(States.Sending);
+                        try
+                        {
+                            ThrowData = LoadThrowDataFromJson(filePath);
+                            ChangeStateTo(States.Sending);
+                        }
+                        catch (FileNotFoundException e)
+                        {
+                            if (throwTypeRequested == ThrowType.Saved)
+                            {
+                                MessageBox.Show("You must save a throw before using this mode");
+                                ChangeStateTo(States.Idle);
+                            }
+                            else
+                            {
+                                MessageBox.Show(e.Message);
+                                ChangeStateTo(States.Error);
+                            }
+                            ThrowCtr--;
+                        }                        
           
                         break;
                     }
@@ -355,7 +372,7 @@ namespace SerialLibrary
                         if (true)
                         {
                             apcq.SwitchConsumerActionTo(masp.ListenAndCheck);
-                            ThrowRequested = false;
+                            ThrowData.Data.DateExecuted = DateTime.Now;
                             ThrowData.WriteDataToJsonFile(CSHARP_JSON_FILEPATH);
                             ChangeStateTo(States.Idle);
                         }

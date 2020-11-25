@@ -9,12 +9,10 @@ import config
 fileTrialData = config.TRIALDATARECORD_FILEPATH  # json file path to be read by CSharp running this script
 # fs = config.SAMPLING_FREQUENCY      # Sampling Frequency, Hz
 time = []
-refY = []
-N = 0
-initStates = [0, 0]
-
-
-
+ref_shoulder = []
+ref_elbow = []
+initStates = []
+PSI_LIMIT = 40
 
 
 # Define Model Dynamics
@@ -37,12 +35,11 @@ def f(xk,uk,ak):
                xk[1] + (Ts / I) * (-c * xk[1] - 9.81 * m * L * sin(xk[0]) + r * cNoP * A * (uk[0] +ak[0])))
     return xkp1
 
-#---------------
+
 def h(xk,uk,ak):
-#---------------
     y = xk[0]
     return y
-#---------------
+
 
 
 # Add constraint on input signal
@@ -51,7 +48,6 @@ def hzc(xk,uk,ak):                      # Define a constrained output function
     zc = [uk[0]]
     return zc
 
-#====================================================
 
 # Apply a penalty to the control signal
 #====================================================
@@ -71,28 +67,37 @@ def convertlisttonparray(lst: list):
 
 
 def assignref(_ilc):
+    global arraysize
+    N = arraysize
     _ilc.r = zeros((1, N))                    # Initialise the reference vector in the gILC object
     for k in range(N):
-        _ilc.r[0, k] = float(refY[k]/180.0*np.pi)
+        _ilc.r[0, k] = float(ref_shoulder[k]/180.0*np.pi)
+        # _ilc.r[1, k] = float(ref_elbow[k]/180.0*np.pi)
+        # TODO - Uncomment the line above
 
     print(f"Last Ref Val is: {_ilc.r[0,N-1]}")
 
 
-def loadrefsignal(freq, _ilc):
-    global fs, time, refY, initStates, N
-    fs = freq
-    time, refY = crf.ref(freq)  # generates reference trajectory
-    N = len(time)  # Total number of samples - length of reference signal
-    initStates = [refY[0] * np.pi / 180.0, 0]  # these are the initial conditions for each state
+def loadrefsignal(_ilc):
+    global time, ref_shoulder, ref_elbow, initStates
+    time, ref_shoulder, ref_elbow = crf.ref(fs, arraysize)  # generates reference trajectory
+    print(f"ref_shoulder: {ref_shoulder}")
+
+    if len(time) != arraysize:
+        print(f"Calculated time series length: {len(time)} does not match ArraySize value: {arraysize}")
+    initStates = [ref_shoulder[0] * np.pi / 180.0, 0]  # these are the initial conditions for each state
+    # TODO - fix this to include elbow, this array stays one dimensional, just add elbow states onto the end
     assignref(_ilc)
-    return N, initStates
 
 
-def calcthrow(throwdata: ThrowData, freq):
+def calcthrow(throwdata: ThrowData):
     # Define simulation
     # ------------------
-    global fs
-    fs = freq  # Sample time
+    global fs, arraysize, initStates, ref_shoulder, ref_elbow
+    fs = throwdata.SamplingFrequency  # Sample frequency, hz
+    arraysize = throwdata.ArraySize
+    print(f"throwdata.ArraySize: {throwdata.ArraySize}")
+    N = arraysize
     pen = invpen(fs)  # Create the inverted pendulum
     ilc = gilcClass()  # Create the gILC object
     # ---------------------
@@ -108,7 +113,7 @@ def calcthrow(throwdata: ThrowData, freq):
     ilc.ny = 1  # Number of outputs
     # --------------------------
 
-    N, initStates = loadrefsignal(fs, ilc)
+    loadrefsignal(ilc)
 
     ilc.f = f  # Provide state equations f
     ilc.h = h  # Provide output equations h
@@ -117,7 +122,6 @@ def calcthrow(throwdata: ThrowData, freq):
     # Define the initial state
     # ----------------------------------------------
     ilc.xinit = initStates
-    print(f"ILC.XINIT: {ilc.xinit}")
     # ----------------------------------------------
 
     ilc.con.hzm = hzm  # Penalty term is applied in the control step
@@ -126,9 +130,8 @@ def calcthrow(throwdata: ThrowData, freq):
     # ====================================================
 
     ilc.con.hzc = hzc  # The constraint is applied in the control step
-    ilc.con.zmax = 40 * ones((1, N))  # Upper bound
-    ilc.con.zmin = -40 * ones((1, N))  # Lower bound
-
+    ilc.con.zmax = PSI_LIMIT * ones((1, N))  # Upper bound
+    ilc.con.zmin = -PSI_LIMIT * ones((1, N))  # Lower bound
 
     #ilc.est.Qy = 1e4 * ones((ilc.ny, N))
     #ilc.con.Qy = 1e4 * ones((ilc.ny, N))
@@ -138,15 +141,16 @@ def calcthrow(throwdata: ThrowData, freq):
         print("Initialized the correction signal, a(k), for the first trial")
     elif throwdata.TrialNumber > 0:
         if isinstance(throwdata.Shoulder.Sensor, list):
+            # TODO - add elbow data here
             u_last = convertlisttonparray(throwdata.Shoulder.Cmd)
             y_last = convertlisttonparray(throwdata.Shoulder.Sensor) * pi/180
         a, xa = ilc.estimation(u_last, y_last)  # Solve the estimation problem (calculates the correction signal)
 
+    r = ref_shoulder  # TODO - combine ref_elbow into this, probably as a 2D matrix
     u, xu = ilc.control(a)  # Solve the control problem
-    return u, a, ilc, time, refY
+    return u, a, ilc, time, r
 
-
-
+# TODO - update this method for elbow
 # region Simulate Throw Method
 
 
@@ -162,6 +166,7 @@ def simthrow(u_i, _ilc):
 
 # endregion
 
+# TODO - update this method for elbow
 # region Plotting Simulation Method
 
 
