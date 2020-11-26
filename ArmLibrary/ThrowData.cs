@@ -50,11 +50,13 @@ namespace ArmLibrary
             /// Sets the trial number to zero, sets the sampling frequency, and Initializes the Json file to be used by Python for the first throw
             /// </summary>
             /// <param name="path"></param>
-            public void WriteFirstThrowDataToJson(string path)
+            public void WriteFirstThrowDataToJson(string path, float[] time)
         {
             Data.TrialNumber = 0;
             Data.ArraySize = GlobalVariables.ARRAY_SIZE;
             Data.SamplingFrequency = GlobalVariables.SAMPLING_FREQUENCY;
+            Data.Shoulder.Time = time;
+            Data.Elbow.Time = time;
             WriteDataToJsonFile(path);
         }
 

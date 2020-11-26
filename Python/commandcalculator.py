@@ -80,7 +80,7 @@ def assignref(_ilc):
 
 def loadrefsignal(_ilc):
     global time, ref_shoulder, ref_elbow, initStates
-    time, ref_shoulder, ref_elbow = crf.ref(fs, arraysize)  # generates reference trajectory
+    ref_shoulder, ref_elbow = crf.ref(time)  # generates reference trajectory
     print(f"ref_shoulder: {ref_shoulder}")
 
     if len(time) != arraysize:
@@ -93,7 +93,8 @@ def loadrefsignal(_ilc):
 def calcthrow(throwdata: ThrowData):
     # Define simulation
     # ------------------
-    global fs, arraysize, initStates, ref_shoulder, ref_elbow
+    global fs, arraysize, initStates, ref_shoulder, ref_elbow, time
+    time = throwdata.Shoulder.Time
     fs = throwdata.SamplingFrequency  # Sample frequency, hz
     arraysize = throwdata.ArraySize
     print(f"throwdata.ArraySize: {throwdata.ArraySize}")

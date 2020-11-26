@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 diag = False
 
 
-def ref(fs, arraysize):
-    timeStep = 1.0 / fs
+def ref(time):
+    arraysize = len(time)
+    timeStep = time[1] - time[0]
     tSh_startFromZero = np.array([0.0, 0.1, 0.2, 0.5,
                                   0.8, 0.9, 1.0, 1.2])
     thetaSh_startFromZero = 180.0/np.pi*np.array([0.0, 0.025, 0.075, 0.45,
@@ -32,7 +33,7 @@ def ref(fs, arraysize):
     tEl = np.array([0.0, 0.1, 1.0])
     thetaEl = np.array([.7, .75, .8])
     print(f"arraysize: {arraysize}")
-    xs = np.arange(tSh[0], arraysize*timeStep, timeStep)
+    xs = time
     print(f"xs: {xs}")
     if len(xs) != arraysize:
         print("Something is wrong with reference time series creation")
@@ -58,7 +59,7 @@ def ref(fs, arraysize):
         plt.plot(xs, ys_el, label="Elbow")
         plt.show()
 
-    return xs, ys_sh, ys_el
+    return ys_sh, ys_el
 
 
 # ref(100, 101)

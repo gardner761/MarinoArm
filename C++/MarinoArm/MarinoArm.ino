@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////
 //MARINOARM (SLAVE)//
-//This board is a slave controller
+//This board is a slave controller for the ip transducers and potentiometers
 ///////////////////////////////////////////////////////////////////////////
 
 //Library Declarations
@@ -22,14 +22,18 @@ String inString = "";
 double Kol; // variable to store the value coming from the sensor
 double thetaDot;
 int outVal;
-int sensorPin = A0;    // select the input pin for the potentiometer
-int valvePin = 22;      // select the pin for the LED
-int outPin = 11;
+int shSensorPin = A0; // select the input pin for the potentiometer
+int elSensorPin = A1;
+int shValvePin = 22; // select the pin for the LED
+int elValvePin = 23;
+int shOutPin = 11;
+int elOutPin = 12;
 int ledPin = 13;
-int sensorDeg;
-int zeroOffset;
+int shSensorDeg;
+int elSensorDeg;
+int shZeroOffset;
+int elZeroOffset;
 
-int freqHz = 100;
 SerialMarino serialM(&Serial);
 int startPos = 54; //this is the first value of the reference signal
 int isStepNumber;
@@ -46,48 +50,35 @@ bool flag, disp = false;
 int stillSum;
 bool isCalibration = false;
 int arraySize; //updated after program runs, is provided by CSharp
+int SamplingFrequency = 100; //this should match the C# sampling frequency
 const int sizer = 101;   //326; //this should be larger than what the arraySize value is
-byte psiDataInArray[sizer]; //WARNING!!!!! CHANGE THIS BACK TO match the RAP arraySize
-byte ipDataArray[sizer];
-bool switchSolenoidDataArray[sizer];
+byte shCmdData[sizer]; //WARNING!!!!! CHANGE THIS BACK TO match the RAP arraySize
+byte elCmdData[sizer];
+bool shSolenoidData[sizer];
+bool elSolenoidData[sizer];
 bool switchOn;
-
-//Calibration Data
-//AnalogVal     Output psi
-//50            n/a
-//75            5
-//80            7.5
-//90            10.5
-//100           13.1
-//110           15.9
-//125           19.7
-//150           26.1
-//200           39
-
-
-
-
-
-
 
 
 
 void setup()
 {
   serialM.begin(115200);
-  pinMode(valvePin, OUTPUT);
-  pinMode(outPin, OUTPUT);
+  pinMode(shValvePin, OUTPUT);
+  pinMode(shOutPin, OUTPUT);
+  pinMode(elValvePin, OUTPUT);
+  pinMode(elOutPin, OUTPUT);
   pinMode(ledPin, OUTPUT);
-  analogWrite(outPin, 0);
-  digitalWrite(valvePin, LOW);
+  analogWrite(shOutPin, 0);
+  digitalWrite(shValvePin, LOW);
+  analogWrite(elOutPin, 0);
+  digitalWrite(elValvePin, LOW);
 
   // INITIALIZING THE ROBOT SENSORS AND TRAVELLING TO START POSITION
-  zeroOffset = GetZeroReading();
+  shZeroOffset = GetZeroReading(shSensorPin);
+  elZeroOffset = GetZeroReading(elSensorPin);
   //Serial.println(zeroOffset);
 
-
-  //CONNECTING: Sending Hello and Waiting for one Back from
-  //only does this one time
+  //CONNECTING: waiting for hello and then Sending Hello Back
   if (!isConnected & !isCalibration)
   {
     timerMilli.set(0);
@@ -96,7 +87,6 @@ void setup()
     while (!serialM.listenForInt(&arraySize)) {}   // assigns the arraySize from C# message
     serialM.sendMessage(String(arraySize));
   }
-
 
   if(arraySize>sizer)
   {
@@ -114,27 +104,17 @@ void setup()
 
 
 
-
-
-
-
 void loop()
 {
   //STEP 0: initializing
   if (isStepNumber == 0)
   {
-    clockTime = 1000000 / freqHz;
-    timerSensor.set(clockTime / 50);
-    timerMicro.set(clockTime);
-    timerDISP.set(clockTime * 50);
+    clockTime = 1000000 / SamplingFrequency; //timeStep in microseconds
+    timerSensor.set(clockTime / 50); //goes off every 200us, helps with sensor value averaging
+    timerMicro.set(clockTime); //goes off every 10ms or 10,000us
+    timerDISP.set(clockTime * 50); //goes off every 500ms 
     ChangeStepNumber(5);
   }
-
-
-
-
-
-
 
 
   //SENSOR READINGS
@@ -150,15 +130,9 @@ void loop()
     flag = true;
     if (disp)
     {
-      Serial.println("SensorDeg: " + String(sensorDeg));
+      Serial.println("SensorDeg: " + String(shSensorDeg));
     }
   }
-
-
-
-
-
-
 
 
 
@@ -195,14 +169,14 @@ void loop()
     if (serialM.listenAndCheck("NEWTHROW"))
     {
       ChangeStepNumber(20);
-      timerMilli.set(150);
+      timerMilli.set(150); 
     }
     else
     {
       timerMilli.call();
       if (timerMilli.isDone)
       {
-        timerMilli.set(1500);
+        timerMilli.set(1500); // goes off every 1500ms
         if(switchOn)
         {
           switchOn = false;
@@ -228,16 +202,16 @@ void loop()
   if (isStepNumber == 20)
   {
 
-    if (serialM.collectNewData(psiDataInArray, arraySize))
+    if (serialM.collectNewData(shCmdData, arraySize))
     {
       ChangeStepNumber(25);
     }
-    else
+    else //blinks rapidly until all data has been received
     {
       timerMilli.call();
       if (timerMilli.isDone)
       {
-        timerMilli.set(150);
+        timerMilli.set(150);// goes off every 150ms
         if(switchOn)
         {
           switchOn = false;
@@ -259,8 +233,8 @@ void loop()
   //STEP 25: Converting Data for I/P Transducer and Switch Solenoid
   if (isStepNumber == 25)
   {
-    convertToIPTransducer(); //populates the ipDataArray and switchSolenoidDataArray
-
+    convertToIPTransducer(shCmdData, shSolenoidData); //populates the ipDataArray and shSolenoidData
+    convertToIPTransducer(elCmdData, elSolenoidData);
     if(isSkipMoveToInitPosStep)
     {
       ChangeStepNumber(40);
@@ -286,13 +260,13 @@ void loop()
       Serial.println("New Bump on its way!");
     }
     stillSum = 0;
-    if (!CheckTargetProximity(sensorDeg, startPos))
+    if (!CheckTargetProximity(shSensorDeg, startPos))
     {
-      errDeg = startPos - sensorDeg;
+      errDeg = startPos - shSensorDeg;
       int signOfError = errDeg / abs(errDeg);
       if (!closeToTarget)
       {
-        int newRef = 5 * signOfError + sensorDeg;
+        int newRef = 5 * signOfError + shSensorDeg;
         BumpTo(newRef);
       }
       else
@@ -332,44 +306,42 @@ void loop()
     serialM.sendMessage("START");
     ctr = 0;
     iSens = 0;
-    clockTime = 1000000 / freqHz;
+    clockTime = 1000000 / SamplingFrequency;
     timeStart = micros();
     lastTime = timeStart;
     timerSensor.set(clockTime / 50);
     timerMicro.set(clockTime);
+    float* sd;
+
     while (ctr < arraySize)
     {
       if (timerSensor.runMetronome())
       {
-        sensorDeg = CalcSensorDeg(false);
+        sd = CalcSensorDeg(false);
         iSens++;
       }
+      // Writes and Reads at the sampling frequency
       if (timerMicro.runMetronome())
       {
-        analogWrite(outPin, ipDataArray[ctr]);
-        digitalWrite(valvePin, switchSolenoidDataArray[ctr]);
-        serialM.writeByte(byte(sensorDeg));
-        //serialM.writeByte(byte(ctr));
-        //serialM.writeByte(byte(psiDataInArray[ctr]));
+        analogWrite(shOutPin, shCmdData[ctr]);
+        digitalWrite(shValvePin, shSolenoidData[ctr]);
+        analogWrite(elOutPin, elCmdData[ctr]);
+        digitalWrite(elValvePin, elSolenoidData[ctr]);
+
+        //The order is critical, write shoulder first then elbow
+        serialM.writeByte(byte(sd[0]));
+        serialM.writeByte(byte(sd[1]));
+
         ctr++;
-
-        //      timeNow = micros();
-
-        //      thisScanTime = timeNow - lastTime;
-        //      lastTime = timeNow;
-        //      if (thisScanTime > maxScanTime)
-        //      {
-        //        maxScanTime = thisScanTime;
-        //        t = ctr;
-        //      }
       }
     }
 
     timeStop = micros();
     totalScanTime = timeStop - timeStart;
     serialM.sendMessage("END");
+    shSensorDeg = sd[0];
+    elSensorDeg = sd[1];
     ChangeStepNumber(50);
-
   }
 
 
@@ -378,8 +350,10 @@ void loop()
   //STEP 50: Shut off Ip Transducer and switch solenoid, wait for "RECEIVED" message from C#
   if (isStepNumber == 50)
   {
-    analogWrite(outPin, 0);
-    digitalWrite(valvePin, false);
+    analogWrite(shOutPin, 0);
+    digitalWrite(shValvePin, false);
+    analogWrite(elOutPin, 0);
+    digitalWrite(elValvePin, false);
     if(serialM.listenAndCheck("RECEIVED"))
     {
       ChangeStepNumber(90);
@@ -415,22 +389,17 @@ void loop()
         delay(1);
       }
       outVal = readString.toInt();
-      analogWrite(outPin, outVal);
+      analogWrite(shOutPin, outVal);
       Serial.println("New Outval of: " + readString);
     }
   }
 
 }// end loop()
 
-
-
-
-
-
-
-
-
-
+/// <summary>
+/// used for testing, populates the array passed in with a few values
+/// </summary>
+/// <param name="dataArray"></param>
 void populateDataArray(byte dataArray[])
 {
   dataArray[0] = -13;
@@ -438,69 +407,74 @@ void populateDataArray(byte dataArray[])
   dataArray[arraySize - 1] = 130;
 }
 
-
-
-
-
-
-
-
-
-float CalcSensorDeg(bool isDoReading)
+/// <summary>
+/// window averaging of sensor deg values
+/// </summary>
+/// <param name="isCheckIfStill">
+/// writes current average values to global sensorDeg values
+/// </param>
+/// <returns>
+/// outputs the current shoulder deg average value
+/// </returns>
+float* CalcSensorDeg(bool isCheckIfStill)
 {
   const int LENGTH_OF_ARRAY = 50;
-  static int thetaDotVals[LENGTH_OF_ARRAY] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  //static int thetaDotTimes[LENGTH_OF_ARRAY] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  //static long lastRecordTime = 0;
-  static long sumDeg = 0;
-  static float sDev = 0;
-  static float output = 0;
+  static int shoulderVals[LENGTH_OF_ARRAY] = {}; //FIFO array
+  static int elbowVals[LENGTH_OF_ARRAY] = {}; //FIFO array
 
-  //sumDeg = 0;
-  //sDev = 0;
-  int sensordeg = 10.0 * (analogRead(sensorPin) - zeroOffset) * 360.0 / 1023.0;
+  static long sumShDeg = 0;
+  static long sumElDeg = 0;
+
+  static float output[] = {0,0};
+  static float shOutput = 0;
+  static float elOutput = 0;
+
+  int shDeg = round(10.0 * (analogRead(::shSensorPin) - ::shZeroOffset) * 360.0 / 1023.0);
+  int elDeg = round(10.0 * (analogRead(::elSensorPin) - ::elZeroOffset) * 360.0 / 1023.0);
+
+  // Rotates the all values in shoulderVals one index value to the left, 
+  // first value (index 0) is kicked out and last value is updated with new reading
   for (int i = 0; i < LENGTH_OF_ARRAY; i++)
   {
-
-    if (i == LENGTH_OF_ARRAY - 1)
+    if (i == 0)
     {
-      thetaDotVals[i] = sensordeg;
-      sumDeg += thetaDotVals[i];
-      //thetaDotTimes[i] = micros();
+    sumShDeg -= shoulderVals[i];
+    sumElDeg -= elbowVals[i];
+    shoulderVals[i] = shoulderVals[i + 1];
+    elbowVals[i] = elbowVals[i + 1];
     }
-    else if (i == 0)
+    else if (i < LENGTH_OF_ARRAY - 1)
     {
-      sumDeg -= thetaDotVals[i];
-      thetaDotVals[i] = thetaDotVals[i + 1];
+      shoulderVals[i] = shoulderVals[i + 1];
+      elbowVals[i] = elbowVals[i + 1];
     }
     else
     {
-      thetaDotVals[i] = thetaDotVals[i + 1];
-      //thetaDotTimes[i] = thetaDotTimes[i + 1];
+        shoulderVals[i] = shDeg;
+        elbowVals[i] = elDeg;
+        sumShDeg += shoulderVals[i];
+        sumElDeg += elbowVals[i];
     }
-    //    if (i != 0)
-    //    {
-    //      thetaDot = (thetaDotVals[i] - thetaDotVals[i - 1]) / (thetaDotTimes[i] - thetaDotTimes[i - 1]) / float(LENGTH_OF_ARRAY - 1);
-    //    }
-    //sumDeg += thetaDotVals[i];
-    //sDev += abs(output - thetaDotVals[i]);
   }
-  output = sumDeg / float(LENGTH_OF_ARRAY) / 10.0;
-  //sDev = sDev/float(LENGTH_OF_ARRAY);
+  shOutput = sumShDeg / float(LENGTH_OF_ARRAY) / 10.0;
+  elOutput = sumElDeg / float(LENGTH_OF_ARRAY) / 10.0;
+  output[0] = shOutput;
+  output[1] = elOutput;
 
 
   //outputting readings
-  isStill = false;
-  if (isDoReading)
+  ::isStill = false;
+  if (isCheckIfStill)
   {
     if (timerMicro.runMetronome())
     {
-      sensorDeg = CalcSensorDeg(true);
-      sensorThetaDot = float(sensorDeg - lastReading) * float(freqHz);
-      lastReading = sensorDeg;
+      ::shSensorDeg = shOutput;
+      ::elSensorDeg = elOutput;
+      sensorThetaDot = float(shDeg - lastReading) * float(::SamplingFrequency);
+      lastReading = shDeg;
       float degTol = 1.5;
 
-      if (degTol * freqHz > sensorThetaDot & sensorThetaDot > -degTol * freqHz)
+      if (degTol * SamplingFrequency > sensorThetaDot & sensorThetaDot > -degTol * SamplingFrequency)
       {
         stillSum++;
         if (stillSum > 40)
@@ -519,39 +493,28 @@ float CalcSensorDeg(bool isDoReading)
   return output;
 }
 
-
-
-
-
-
-
-
-
-int GetZeroReading()
+/// <summary>
+/// Calculates the zero reading of the sensor, it averages 100 data points collected over 1/2sec timespan
+/// </summary>
+/// <param name="pin">
+/// sensor pin value
+/// </param>
+/// <returns>
+/// averaged reading output
+/// </returns>
+int GetZeroReading(int pin)
 {
   const int LENGTH_OF_ARRAY = 100;
   int sumDeg = 0;
   int output = 0;
   for (int i = 0; i < LENGTH_OF_ARRAY; i++)
   {
-    sumDeg += analogRead(sensorPin);
+    sumDeg += analogRead(pin);
     delay(5);
   }
   output = float(sumDeg) / float(LENGTH_OF_ARRAY);
   return output;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 bool CheckTargetProximity(int currentpos, int targetpos)
 {
@@ -576,10 +539,6 @@ bool CheckTargetProximity(int currentpos, int targetpos)
   return onTarget;
 }
 
-
-
-
-
 float OpenLoopStaticOutput(float ref_deg)
 {
   double Kol = 165.0;
@@ -593,10 +552,6 @@ float OpenLoopStaticOutput(float ref_deg)
     return output;
   }
 }
-
-
-
-
 
 void BumpTo(int ref)
 {
@@ -621,7 +576,7 @@ void BumpTo(int ref)
       float Kt = 10;
       float Ka = 10;
 
-      int err = ref - sensorDeg;
+      int err = ref - ::shSensorDeg;
       int signOfError = err / abs(err);
 
       bumpTime = bumpMin + Kt * abs(err);
@@ -640,7 +595,7 @@ void BumpTo(int ref)
         A = 1.1 * A;
       }
       //outVal = A * signOfError + outVal;
-      outVal = A * signOfError + OpenLoopStaticOutput(sensorDeg);
+      outVal = A * signOfError + OpenLoopStaticOutput(::shSensorDeg);
 
       if (outVal > outMax)
       {
@@ -659,7 +614,7 @@ void BumpTo(int ref)
         Serial.println("Bump Error Degrees is: " + String(err));
       }
       timerBUMP.set(bumpTime);
-      analogWrite(outPin, outVal);
+      analogWrite(::shOutPin, outVal);
     }
 
     if (isBumping & !isHolding )
@@ -675,13 +630,12 @@ void BumpTo(int ref)
     if (isHolding)
     {
       outVal = OpenLoopStaticOutput(ref);
-      analogWrite(outPin, outVal);
+      analogWrite(::shOutPin, outVal);
       //Serial.println("Position Held is: " + String(sensorDeg));
       isDone = true;
     }
   }
 }
-
 
 void ChangeStepNumber(int newStepNumber)
 {
@@ -692,49 +646,48 @@ void ChangeStepNumber(int newStepNumber)
   }
 }
 
-
-void convertToIPTransducer()
+void convertToIPTransducer(byte dataArray[], bool solenoidDataArray[])
 {
   // if a byte = 255, the conversion to an int = -1
   for(int i=0;i<arraySize;i++)
   {
-    if(psiDataInArray[i]>127)
+    if(dataArray[i]>127)
     {
-      int temp = psiDataInArray[i] - 255;
+      int temp = dataArray[i] - 255;
       temp = - temp;
-      psiDataInArray[i] = byte(temp);
-      ipDataArray[i] = ConvertPsiToIp(psiDataInArray[i]);
-      switchSolenoidDataArray[i] = true;
+      dataArray[i] = byte(temp);
+      dataArray[i] = ConvertPsiToIp(dataArray[i]);
+      solenoidDataArray[i] = true;
     }
     else
     {
-      ipDataArray[i] = ConvertPsiToIp(psiDataInArray[i]);
-      switchSolenoidDataArray[i] = false;
+      dataArray[i] = ConvertPsiToIp(dataArray[i]);
+      solenoidDataArray[i] = false;
     }
     
   }
 }
 
-
 byte ConvertPsiToIp(byte psi)
 {
-  byte analogOut;
-  if(psi<7.5){
-    analogOut = 2*psi + 65;
-  }
-  else{
-    analogOut = byte(3.7529*float(psi) + 52.076);
-  }
-  return analogOut;
+    byte analogOut;
+    if (psi < 7.5) {
+        analogOut = 2 * psi + 65;
+    }
+    else {
+        analogOut = byte(round(3.7529 * float(psi) + 52.076));
+    }
+    return analogOut;
+
+    //Calibration Data
+    //AnalogVal     Output psi
+    //50            n/a
+    //75            5
+    //80            7.5
+    //90            10.5
+    //100           13.1
+    //110           15.9
+    //125           19.7
+    //150           26.1
+    //200           39
 }
-//Calibration Data
-//AnalogVal     Output psi
-//50            n/a
-//75            5
-//80            7.5
-//90            10.5
-//100           13.1
-//110           15.9
-//125           19.7
-//150           26.1
-//200           39

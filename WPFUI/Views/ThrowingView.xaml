@@ -25,8 +25,8 @@
             <RowDefinition Height="auto"/>
             <RowDefinition Height="50"/>
             <RowDefinition Height="auto"/>
-            <RowDefinition Height="50"/>
             <RowDefinition Height="20"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
@@ -117,21 +117,41 @@
         </Button>
 
         <oxy:PlotView Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="6"
-            Name="CmdPlotModel"             
-            Model="{Binding Path=CmdPlotModel, Mode=TwoWay}"
+            Name="ShCmdPlotModel"             
+            Model="{Binding Path=ShCmdPlotModel, Mode=TwoWay}"
             Background="Black" Foreground="#FF706E6E"
             MinWidth="500"
-            MinHeight="400"
+            MinHeight="300"
             VerticalAlignment="Stretch"
             FontSize="20">
         </oxy:PlotView>
 
         <oxy:PlotView Grid.Row="5" Grid.Column="8" Grid.ColumnSpan="2"  
-            Name="PlotModel1"             
-            Model="{Binding Path=PlotModel, Mode=TwoWay}"
+            Name="ShRefPlotModel"             
+            Model="{Binding Path=ShRefPlotModel, Mode=TwoWay}"
             Background="Black" Foreground="#FF706E6E"
             MinWidth="500"
-            MinHeight="400"
+            MinHeight="300"
+            VerticalAlignment="Stretch"
+            FontSize="20">
+        </oxy:PlotView>
+
+        <oxy:PlotView Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="6"
+            Name="ElCmdPlotModel"             
+            Model="{Binding Path=ElCmdPlotModel, Mode=TwoWay}"
+            Background="Black" Foreground="#FF706E6E"
+            MinWidth="500"
+            MinHeight="300"
+            VerticalAlignment="Stretch"
+            FontSize="20">
+        </oxy:PlotView>
+
+        <oxy:PlotView Grid.Row="7" Grid.Column="8" Grid.ColumnSpan="2"  
+            Name="ElRefPlotModel"             
+            Model="{Binding Path=ElRefPlotModel, Mode=TwoWay}"
+            Background="Black" Foreground="#FF706E6E"
+            MinWidth="500"
+            MinHeight="300"
             VerticalAlignment="Stretch"
             FontSize="20">
         </oxy:PlotView>

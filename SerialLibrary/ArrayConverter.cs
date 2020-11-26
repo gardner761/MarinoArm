@@ -15,7 +15,7 @@ namespace SerialLibrary
             int i = 0;
             foreach (float item in inArray)
             {
-                outArray[i] = (int)item;
+                outArray[i] = (int)Math.Round(item);
                 i++;
             }
             return outArray;

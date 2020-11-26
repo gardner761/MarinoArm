@@ -694,3 +694,6 @@ Version.cpp
 /Json/temp
 /SerialConnectLibrary/SerialConnectLibrary.csproj
 /SerialConnectLibrary/DeleteMeLibrary.sln
+/C++/MarinoArm/__vm
+/C++/MarinoArm/MarinoArm.vcxproj
+/C++/MarinoArm/MarinoArm.vcxproj.filters

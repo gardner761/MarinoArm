@@ -15,21 +15,27 @@ namespace SerialLibrary
         #region Defines
 
         private String inString;
-        public Boolean IsDetected, IsFinished;
+        public Boolean IsDetected;
+        /// <summary>
+        /// This is flag indicates that the end of the arduino sensor data stream has been detected
+        /// </summary>
+        public Boolean IsSensorStreamEndDetected;
         private Boolean showDiag = false;
         private int arraySize;
         private SerialPort serialPort;
-        public delegate void UpdatedDataEvent(List<Point> data);
+        public delegate void UpdatedDataEvent(List<Point> shData, List<Point> elData);
         public event UpdatedDataEvent updatedDataEvent;
         public delegate void WordDetectedEvent();
         public event WordDetectedEvent wordDetectedEvent;
         int timeStep_ms;
         int iChunk;
+        bool switchBitIsOn;
 
         #endregion
 
         #region Properties
         public List<int> ShoulderSensorData { get; set; }
+        public List<int> ElbowSensorData { get; set; }
         public String CheckString { get; set; }
         public Boolean IsHelloReceived { get; set; }
         #endregion
@@ -41,6 +47,7 @@ namespace SerialLibrary
             this.arraySize = arraySize;
             serialPort = sp;
             ShoulderSensorData = new List<int>();
+            ElbowSensorData = new List<int>();
             timeStep_ms = t_ms;
         }
 
@@ -48,33 +55,18 @@ namespace SerialLibrary
 
         #region Consume Actions
         /// <summary>
-        /// Used to consume incoming byte data from arduino and updates shoulder sensor data
+        /// Used to consume incoming byte data from arduino and updates sensor data
         /// </summary>
         /// <param name="inByte"></param> 
         public void AddByteToList(byte inByte)
         {
             char inChar = (char)inByte;
+            bool isStillCollectingData = ElbowSensorData.Count < arraySize;
 
-            if (inChar == '\n' & this.inString.EndsWith("END"))
+            // Collect Incoming Byte Data from Arduino until Elbow Count is full
+            if (isStillCollectingData)
             {
-                IsFinished = true;
-                this.inString = "";
-                ShoulderSensorData.RemoveRange(ShoulderSensorData.Count - 3, 3);
-                chunkUpdater(true);
-                Console.WriteLine($"Shoulder sensor count: {ShoulderSensorData.Count}");
-                wordDetectedEvent();
-            }
-            else
-            {
-
-                if (this.inString.Length >= 3)
-                {
-                    this.inString = $"{this.inString.Substring(1, 2)}{inChar}";
-                }
-                else
-                {
-                    this.inString += inChar;
-                }
+                // Range of acceptable sensor angle values is -56 to 199
                 int angle;
                 if (inByte < 200)
                 {
@@ -84,10 +76,42 @@ namespace SerialLibrary
                 {
                     angle = inByte - 256;
                 }
-                ShoulderSensorData.Add(angle);
-                if (ShoulderSensorData.Count <= arraySize)
+                if (!switchBitIsOn)
                 {
+                    ShoulderSensorData.Add(angle);
+                    switchBitIsOn = true;
+                }
+                else
+                {
+                    ElbowSensorData.Add(angle);
+                    switchBitIsOn = false;
                     chunkUpdater(false);
+                }
+            }
+            // This detects the end of the sensor data stream from Arduino, which is terminated with the word "END"
+            else
+            {
+                if (inChar == '\n' & this.inString.EndsWith("END"))
+                {
+                    this.inString = "";
+                    chunkUpdater(true);
+                    Console.WriteLine($"Shoulder sensor count: {ShoulderSensorData.Count}");
+                    switchBitIsOn = false;
+
+                    IsSensorStreamEndDetected = true; //this is flag that gets used in RAP receiving state
+                    wordDetectedEvent(); //this causes UpdateStateMachine() to execute in the RAP
+                }
+                else
+                {
+                    // Builds string of length 3 in order to help detect the end of the stream, see above
+                    if (this.inString.Length >= 3)
+                    {
+                        this.inString = $"{this.inString.Substring(1, 2)}{inChar}";
+                    }
+                    else
+                    {
+                        this.inString += inChar;
+                    }
                 }
             }
         }
@@ -219,16 +243,27 @@ namespace SerialLibrary
 
         #endregion
 
-        private void chunkUpdater(bool updateAll)
+        #region Helper Methods
+
+        /// <summary>
+        /// Sends chunks of point data to UI based on chunk size or lastUpdate argument
+        /// </summary>
+        /// <param name="lastUpdate">
+        /// normally false, but if true, indicates that the last data has been received, which forces data to be sent to UI
+        private void chunkUpdater(bool lastUpdate)
         {
             int start, count;
-            const int updateChunkSize = 10;
-            if (ShoulderSensorData.Count == 1)
+
+            //packet size data points that get sent to UI at a time, should be as small as possible without causing lag
+            const int updateChunkSize = 10; 
+            if (ElbowSensorData.Count == 1)
             {
                 iChunk = 1;
             }
 
-            if (ShoulderSensorData.Count >= updateChunkSize * iChunk || updateAll)
+            bool chunkUpdate = ElbowSensorData.Count >= updateChunkSize * iChunk;
+
+            if ( chunkUpdate || lastUpdate)
             {
                 start = updateChunkSize * (iChunk - 1);
                 count = ShoulderSensorData.Count - start;
@@ -236,24 +271,27 @@ namespace SerialLibrary
                 {
                     if (updatedDataEvent != null)
                     {
-                        updatedDataEvent(GetDataPointRange(start, count));
+                        updatedDataEvent(GetDataPointRange(ShoulderSensorData, start, count),
+                            GetDataPointRange(ElbowSensorData, start, count));
                         iChunk++;
                     }
                 }
             }
         }
-        public List<Point> GetDataPointRange(int start, int count)
+        public List<Point> GetDataPointRange(List<int> data, int start, int count)
         {
-            List<int> ssd = ShoulderSensorData.GetRange(start, count);
+            List<int> dataList = data.GetRange(start, count);
             List<Point> output = new List<Point>();
-            for (int i = 0; i < ssd.Count; i++)
+            for (int i = 0; i < dataList.Count; i++)
             {
-                int t = timeStep_ms * (i + 1 + start);
-                Point p = new Point(t, ssd[i]);
+                int t = timeStep_ms * (i + start);
+                Point p = new Point(t, dataList[i]);
                 output.Add(p);
             }
-            //Console.WriteLine($"Updating {ssd.Count} New Data Points From Ardy to Plot, range is {start}, {count}");
+
             return output;
         }
+
+        #endregion
     }
 }

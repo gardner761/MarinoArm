@@ -19,13 +19,17 @@ namespace WPFUI.ViewModels
     {
         #region Defines
 
-        private PlotModel plotModel;
-        private int refreshPlotCount = 3; //amount of trials to run until the plot is refreshed
-        private PlotModel cmdPlotModel;
+        /// <summary>
+        /// Determines the refresh rate of the plots
+        /// </summary>
+        private int refreshPlotCount = 2; //amount of trials to run until the plot is refreshed
 
         private static String saveIconGray = "/Resources/SaveIconGray.png";
         private static String saveIconGreen = "/Resources/SaveIconGreen.png";
         
+        /// <summary>
+        /// determines if line plotting will start a new line (if false) or add to the existing line (if true)
+        /// </summary>
         bool isBuiltNewLine;
         public enum LineType
         {
@@ -38,11 +42,6 @@ namespace WPFUI.ViewModels
         }
 
         RobotArmProtocol robotArmProtocol;
-
-        /// <summary>
-        /// Determines the refresh rate of the plots
-        /// </summary>
-        private int clearPlotCtr=2;
 
         private SolidColorBrush saveButtonBackgroundBrush = Brushes.Azure;
 
@@ -157,30 +156,67 @@ namespace WPFUI.ViewModels
 
         #endregion
 
-        public PlotModel PlotModel
+        #region Plot Models
+
+        private PlotModel shRefPlotModel;
+        public PlotModel ShRefPlotModel
         {
             get
             {
-                return plotModel;
+                return shRefPlotModel;
             }
             set
             {
-                plotModel = value;
-                NotifyOfPropertyChange(() => PlotModel);
+                shRefPlotModel = value;
+                NotifyOfPropertyChange(() => ShRefPlotModel);
             }
         }
-        public PlotModel CmdPlotModel
+
+        private PlotModel shCmdPlotModel;
+        public PlotModel ShCmdPlotModel
         {
             get
             {
-                return cmdPlotModel;
+                return shCmdPlotModel;
             }
             set
             {
-                cmdPlotModel = value;
-                NotifyOfPropertyChange(() => CmdPlotModel);
+                shCmdPlotModel = value;
+                NotifyOfPropertyChange(() => ShCmdPlotModel);
             }
         }
+
+        private PlotModel elRefPlotModel;
+        public PlotModel ElRefPlotModel
+        {
+            get
+            {
+                return elRefPlotModel;
+            }
+            set
+            {
+                elRefPlotModel = value;
+                NotifyOfPropertyChange(() => ElRefPlotModel);
+            }
+        }
+
+        private PlotModel elCmdPlotModel;
+        public PlotModel ElCmdPlotModel
+        {
+            get
+            {
+                return elCmdPlotModel;
+            }
+            set
+            {
+                elCmdPlotModel = value;
+                NotifyOfPropertyChange(() => ElCmdPlotModel);
+            }
+        }
+
+        #endregion
+
+        #region Miscellaneous
         public int ThrowCtr
         {
             get
@@ -205,25 +241,39 @@ namespace WPFUI.ViewModels
                 NotifyOfPropertyChange(() => StartButtonVisibility);
             }
         }
-
+        #endregion
 
         #endregion
 
         #region Constructors
         public ThrowingViewModel()
         {
-            if (PlotModel == null)
+            if (ShRefPlotModel == null)
             {
-                PlotModel = new PlotModel();
+                ShRefPlotModel = new PlotModel();
                 int[] minmax = { 0, GlobalVariables.ARRAY_SIZE * 1000/GlobalVariables.SAMPLING_FREQUENCY, -20, 200 };
-                SetupPlotModel(PlotModel, "Joint Trajectory vs. Time","Angle (deg)", minmax);
+                SetupPlotModel(ShRefPlotModel, "Shoulder Trajectory vs. Time","Angle (deg)", minmax);
             }
 
-            if (CmdPlotModel == null)
+            if (ShCmdPlotModel == null)
             {
-                CmdPlotModel = new PlotModel();
+                ShCmdPlotModel = new PlotModel();
                 int[] minmax = { 0, GlobalVariables.ARRAY_SIZE * 1000 / GlobalVariables.SAMPLING_FREQUENCY, -50, 50 };
-                SetupPlotModel(CmdPlotModel, "Cmd Input vs. Time", "Cmd (psi)", minmax);
+                SetupPlotModel(ShCmdPlotModel, "Shoulder Cmd Input vs. Time", "Cmd (psi)", minmax);
+            }
+
+            if (ElRefPlotModel == null)
+            {
+                ElRefPlotModel = new PlotModel();
+                int[] minmax = { 0, GlobalVariables.ARRAY_SIZE * 1000 / GlobalVariables.SAMPLING_FREQUENCY, -20, 200 };
+                SetupPlotModel(ElRefPlotModel, "Elbow Trajectory vs. Time", "Angle (deg)", minmax);
+            }
+
+            if (ElCmdPlotModel == null)
+            {
+                ElCmdPlotModel = new PlotModel();
+                int[] minmax = { 0, GlobalVariables.ARRAY_SIZE * 1000 / GlobalVariables.SAMPLING_FREQUENCY, -50, 50 };
+                SetupPlotModel(ElCmdPlotModel, "Elbow Cmd Input vs. Time", "Cmd (psi)", minmax);
             }
             SaveButtonVisibility = Visibility.Hidden;
         }
@@ -242,6 +292,10 @@ namespace WPFUI.ViewModels
         #endregion
 
         #region Event Handlers
+        /// <summary>
+        /// Reacts to state changes in the RAP, usually as a result of button-pushing on this UI
+        /// </summary>
+        /// <param name="message"></param>
         private void RobotArmProtocol_stateChangedEvent(string message)
         {
             switch (robotArmProtocol.State)
@@ -255,24 +309,31 @@ namespace WPFUI.ViewModels
                     break;
                 case States.TaskPlanning:
                     SaveButtonVisibility = Visibility.Hidden;
-                    if (ThrowCtr % clearPlotCtr == 1 & PlotModel != null)
+                    if (ThrowCtr % refreshPlotCount == 1 & ShRefPlotModel != null & ElRefPlotModel != null)
                     {
-                        ClearPlot(PlotModel);
-                        ClearPlot(CmdPlotModel);
+                        ClearPlot(ShRefPlotModel);
+                        ClearPlot(ShCmdPlotModel);
+                        ClearPlot(ElRefPlotModel);
+                        ClearPlot(ElCmdPlotModel);
                     }
-                        break;
+                    isBuiltNewLine = false;
+                    break;
                 case States.Calculating:
                     break;
                 case States.Loading:
                     break;
                 case States.Sending:
-                    if (ThrowCtr % clearPlotCtr == 1 & PlotModel != null)
+                    if (ThrowCtr % refreshPlotCount == 1 & ShRefPlotModel != null & ElRefPlotModel != null)
                     {
-                        var refPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Ref);
-                        BuildLineOnPlot(PlotModel, LineType.ShoulderRef, refPoints);
+                        var shRefPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Ref);
+                        var elRefPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Elbow.Ref);
+                        BuildLineOnPlot(ShRefPlotModel, LineType.ShoulderRef, shRefPoints);
+                        BuildLineOnPlot(ElRefPlotModel, LineType.ElbowRef, elRefPoints);
                     }
-                    var cmdPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Cmd);
-                    BuildLineOnPlot(CmdPlotModel, LineType.ShoulderCmd, cmdPoints);
+                    var shCmdPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Shoulder.Cmd);
+                    var elCmdPoints = ConvertThrowDataMemberToPoints(robotArmProtocol.ThrowData.Data.Elbow.Cmd);
+                    BuildLineOnPlot(ShCmdPlotModel, LineType.ShoulderCmd, shCmdPoints);
+                    BuildLineOnPlot(ElCmdPlotModel, LineType.ElbowCmd, elCmdPoints);
                     break;
                 case States.Receiving:
                     break;
@@ -287,16 +348,24 @@ namespace WPFUI.ViewModels
             }
         }
 
-        private void RobotArmProtocol_updatedDataEvent(List<Point> data)
+        /// <summary>
+        /// Event handler that reacts to incoming sensor data from arduino by plotting points
+        /// </summary>
+        /// <param name="shData"></param>
+        /// <param name="elData"></param>
+        private void RobotArmProtocol_updatedDataEvent(List<Point> shData, List<Point> elData)
         {
             if (!isBuiltNewLine)
             {
-                BuildLineOnPlot(PlotModel, LineType.ShoulderSensor, data);
+                BuildLineOnPlot(ShRefPlotModel, LineType.ShoulderSensor, shData);
+                BuildLineOnPlot(ElRefPlotModel, LineType.ElbowSensor, elData);
                 isBuiltNewLine = true;
             }
             else
             {
-                AddPointsToCurrentLine(PlotModel, data);
+                // TODO - need to plot elbow data
+                AddPointsToCurrentLine(ShRefPlotModel, shData);
+                AddPointsToCurrentLine(ElRefPlotModel, elData);
             }
         }
 
@@ -369,6 +438,10 @@ namespace WPFUI.ViewModels
             pm.Axes.Add(valueAxis);
          
         }
+
+
+        // TODO - unused, might delete
+        /*
         private List<Point> GetDataPoints()
         {
             List<Point> output = new List<Point>();
@@ -380,7 +453,8 @@ namespace WPFUI.ViewModels
                 output.Add(p);
             }
             return output;
-        }
+        }*/
+
         void AddPointsToCurrentLine(PlotModel pm, List<Point> data)
         {
             var lineSerie = pm.Series[pm.Series.Count - 1] as LineSeries;
@@ -396,7 +470,6 @@ namespace WPFUI.ViewModels
         }
         private void BuildLineOnPlot(PlotModel pm, LineType lineType, List<Point> data)
         {
-            //Console.WriteLine("Building Plot");
             var lineSerie = new LineSeries
             {
                 Color = OxyColors.MediumPurple,
@@ -406,10 +479,12 @@ namespace WPFUI.ViewModels
 
             switch (lineType)
             {
+                case LineType.ElbowCmd:
+                case LineType.ElbowSensor:
                 case LineType.ShoulderCmd:
                 case LineType.ShoulderSensor:
                     {
-                        lineSerie.Title = $"Shoulder Trial {ThrowCtr}";
+                        lineSerie.Title = $"Trial {ThrowCtr}";
                         lineSerie.StrokeThickness = 2;
                         lineSerie.MarkerSize = 1;
                         lineSerie.MarkerType = MarkerType.Circle;
@@ -459,9 +534,10 @@ namespace WPFUI.ViewModels
                         }
                         break;
                     }
+                case LineType.ElbowRef:
                 case LineType.ShoulderRef:
                     {
-                        lineSerie.Title = "Shoulder Ref";
+                        lineSerie.Title = "Ref";
                         lineSerie.StrokeThickness = 3;
                         lineSerie.MarkerSize = 1;
                         lineSerie.MarkerType = MarkerType.Star;
@@ -489,9 +565,20 @@ namespace WPFUI.ViewModels
         private List<Point> ConvertThrowDataMemberToPoints(float[] dm)
         {
             var intArray = ArrayConverter.ConvertFloatArrayToIntArray(dm);
-            var timeArray = robotArmProtocol.CreateTimeSeries(intArray.Length);
+            var timeArray = ConvertTimeToMillis(robotArmProtocol.Time); // TODO - this needs to be replaced
             var points = ArrayConverter.ConvertIntArraysToPointList(timeArray, intArray);
             return points;
+        }
+
+        private int[] ConvertTimeToMillis(float[] time)
+        {
+            var output = new int[time.Length];
+            for(int i=0; i< time.Length; i++)
+            {
+                int x = (int)Math.Round(time[i] * 1000.0);
+                output[i] = x;
+            }
+            return output;
         }
 
         #endregion
@@ -500,9 +587,9 @@ namespace WPFUI.ViewModels
 
         public void StartButton()
         {
-            StartButtonVisibility = Visibility.Hidden;
+
             robotArmProtocol.ThrowRequested = true;
-            isBuiltNewLine = false;
+
         }
         public void SaveButton()
         {

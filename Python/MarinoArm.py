@@ -13,7 +13,7 @@ runSim = False  # disable this normally, use just for simulation
 isFirstThrow = False
 
 
-# 1. Read the json data from C Sharp
+# 1. Read the json data from C#
 print("-----------------------------------------------------------------------------------")
 print("Step 1 - Read the Json Data from C#:")
 dataIn = ThrowData()
@@ -51,7 +51,7 @@ estSh = a[0, :].tolist()
 # TODO - uncomment below
 # cmdEl = u[1, :].tolist()
 # estEl = a[1, :].tolist()
-t = time.tolist()
+t = time
 refSh = commandcalculator.ref_shoulder.tolist()
 refEl = commandcalculator.ref_elbow.tolist()
 dataOut.Shoulder.Cmd = cmdSh
@@ -59,6 +59,8 @@ dataOut.Shoulder.Est = estSh
 dataOut.Shoulder.Ref = refSh
 dataOut.Shoulder.Time = t
 # TODO - uncomment below
+dataOut.Elbow.Cmd = np.linspace(13, 26, len(cmdSh)).tolist()  # delete this
+dataOut.Elbow.Est = estSh  # delete this
 # dataOut.Elbow.Cmd = cmdEl
 # dataOut.Elbow.Est = estEl
 dataOut.Elbow.Ref = refEl
@@ -93,7 +95,7 @@ if dataOut.TrialNumber > 1:  # this loads an existing trial data record as long 
 
 tdr.TrialCount = tdr.TrialCount + 1
 sd = TrialDataStruct()
-sd.time = time.tolist()
+sd.time = time
 sd.r = r.tolist()
 
 if runSim:

@@ -70,6 +70,12 @@ namespace SerialLibrary
         /// </summary>
         public ThrowType ThrowTypeSelected { get; set; }
 
+        public float[] Time
+        {
+            get;
+            private set;
+        }
+
         private int throwCtr;
         public int ThrowCtr
         {
@@ -188,7 +194,8 @@ namespace SerialLibrary
                             // Initialize data and write the first throw json
                             ThrowCtr = 0;
                             ThrowData = new ThrowData();
-                            ThrowData.WriteFirstThrowDataToJson(CSHARP_JSON_FILEPATH); //Initialize ThrowData
+                            Time = CreateTimeSeries(GlobalVariables.ARRAY_SIZE);
+                            ThrowData.WriteFirstThrowDataToJson(CSHARP_JSON_FILEPATH, Time); //Initialize ThrowData
                             Console.WriteLine("Initializing First Throw Json File");
                             masp.SendMessageToArdy("HELLO");
                             ChangeStateTo(States.Initialized);
@@ -344,6 +351,7 @@ namespace SerialLibrary
                         if (_stepNumber == 10 & masp.IsDetected) 
                         {
                             masp.ShoulderSensorData.Clear();
+                            masp.ElbowSensorData.Clear();
                             masp.IsDetected = false;
                             masp.CheckString = "END";
                             apcq.SwitchConsumerActionTo(masp.AddByteToList);
@@ -356,12 +364,13 @@ namespace SerialLibrary
                     }
                 case States.Receiving: //Receiving Data from Arduino
                     {
-                        if (masp.IsFinished) //Waiting to read the word "END" from Arduino
+                        if (masp.IsSensorStreamEndDetected) //Waiting to read the word "END" from Arduino
                         {
                             masp.SendMessageToArdy("RECEIVED");
-                            masp.IsFinished = false;
+                            masp.IsSensorStreamEndDetected = false;
                             apcq.SwitchConsumerActionTo(masp.Listen);
                             ThrowData.Data.Shoulder.Sensor = masp.ShoulderSensorData.ToArray();
+                            ThrowData.Data.Elbow.Sensor = masp.ElbowSensorData.ToArray();
                             timer.Start();
                             ChangeStateTo(States.Done);
                         }
@@ -432,12 +441,12 @@ namespace SerialLibrary
         }
 
         // TODO - look at the usage of this function, use it to populate initial CSharp Json, but then all time series shoudld be referenced from Json after that.
-        public int[] CreateTimeSeries(int arrayLength)
+        public float[] CreateTimeSeries(int arrayLength)
         {
-            var timeArray = new int[arrayLength];
+            var timeArray = new float[arrayLength];
             for (int i = 0; i < arrayLength; i++)
             {
-                int t = timeStep_ms * (i + 1);
+                float t = (float)(timeStep_ms * (i))/1000;
                 timeArray[i] = t;
             }
             return timeArray;

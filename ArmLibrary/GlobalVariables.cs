@@ -9,7 +9,7 @@ namespace ArmLibrary
     public static class GlobalVariables
     {
         // TODO - convert back
-        public const int ARRAY_SIZE = 101; //326; 
+        public const int ARRAY_SIZE = 50; //326; 
         public const int SAMPLING_FREQUENCY = 100;
         /// <summary>
         /// C# writes to this file

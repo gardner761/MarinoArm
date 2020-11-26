@@ -58,7 +58,7 @@ namespace WPFUI.ViewModels
             //      b. Write the sample frequency into the JSON file
             var throwData = new ThrowData();
             var writeToJsonFilePath = @"C:\Users\gardn\source\repos\MarinoArm\Python\DataFromCSharp.json";
-            throwData.WriteFirstThrowDataToJson(writeToJsonFilePath);
+            //throwData.WriteFirstThrowDataToJson(writeToJsonFilePath);
 
             //2. Execute Python Script to Calculate New Open-Loop Control Signal
             var pythonScriptPath =  @"C:\Users\gardn\source\repos\MarinoArm\Python\CSharpTest.py";

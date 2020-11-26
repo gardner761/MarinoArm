@@ -14,7 +14,7 @@ const int BUFF_SIZE = 11;
 SerialMarino::SerialMarino(HardwareSerial* ptrSerial)
 {
 	inSerial = ptrSerial;
-	showDiag = false;  //change this parameter if you want it on
+	showDiag = true;  //change this parameter if you want it on
 	queueIndex = 0;
 	sendIndex = 0;
 	isError = 0;
