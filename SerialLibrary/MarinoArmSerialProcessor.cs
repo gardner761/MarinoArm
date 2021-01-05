@@ -211,7 +211,7 @@ namespace SerialLibrary
                 Console.WriteLine(commandData.Data.Shoulder.Cmd.Length);
             }
             int chunkSize = 50;
-            int N = (int)Math.Ceiling((double)arraySize / chunkSize);
+            int N = (int)Math.Ceiling((double)arraySize / (double)chunkSize);
             int index;
             Console.WriteLine($"Chunking the Throw Command Data into {N} Chunks of {chunkSize} bytes each");
             for (int i = 0; i < N; i++)

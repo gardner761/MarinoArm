@@ -18,10 +18,14 @@ PSI_LIMIT = 40
 # Define Model Dynamics
 #----------------------
 def f(xk, uk, ak):
-    I = 0.005572  # mass moment of inertia about pivot, kg-m^2
-    m = .5 #0.42987  # mass, kg
-    L = 0.10057  # distance from proximal pivot to center of mass, m
-    c = 0.01  # dampening term
+    I1 = 0.005572  # mass moment of inertia about pivot, kg-m^2
+    I2 = 0.15784/1000.0
+    m1 = .5  #0.42987  # mass, kg
+    m2 = .10204
+    L1 = 0.10057  # distance from shoulder pivot to center of mass, m
+    L12 = 0.250  # distance from shoulder pivot to elbow pivot, m
+    L2 = .09058
+    c1 = 0.01  # dampening term
     r = 11.75 / 1000  # radius at which the tension acts, m
     dbore = 16  # diameter of the air cylinder bore, mm
     drod = 5  # diameter of the air cylinder rod, mm
@@ -32,7 +36,7 @@ def f(xk, uk, ak):
     Ts = 1 / fs  # time step, sec
 
     xkp1 = vertcat(xk[0] + Ts * xk[1],
-               xk[1] + (Ts / I) * (-c * xk[1] - 9.81 * m * L * sin(xk[0]) + r * cNoP * A * (uk[0] +ak[0])))
+               xk[1] + (Ts / I1) * (-c1 * xk[1] - 9.81 * m1 * L1 * sin(xk[0]) + r * cNoP * A * (uk[0] +ak[0])))
     return xkp1
 
 

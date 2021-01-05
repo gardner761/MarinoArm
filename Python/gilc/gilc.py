@@ -228,7 +228,7 @@ class nlpproblem:
         #-----------------------
         # Objective function
         #-------------------
-        J = mtimes(transpose(ybar),mtimes(self.Qy,ybar))    # Residual of main tracking error
+        J = mtimes(transpose(ybar), mtimes(self.Qy,ybar))    # Residual of main tracking error
 
         #------
         if self.Minimizedoutputs:

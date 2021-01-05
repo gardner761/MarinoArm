@@ -3,6 +3,7 @@ from TrialDataRecord import*
 from ThrowData import*
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
 
 file_tdr = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\TrialDataRecord.json"
 # openfile = open(file_tdr, 'w')
@@ -13,6 +14,8 @@ def writeFirstJsonFromCSharp():
     _data = ThrowData()
     _data.TrialNumber = 0;
     _data.SamplingFrequency = 100;
+    _data.DateCalculated = datetime.datetime.now()
+    _data.DateExecuted = datetime.datetime.now()
     file = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\DataFromCSharp.json"
     _data.writefile(file)
 
@@ -20,7 +23,7 @@ def writeFirstJsonFromCSharp():
 writeFirstJsonFromCSharp()
 trials = 1
 for i in range(trials):
-    os.system('python MarinoArm.py')  # make sure runSim is set to True
+    os.system('python C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\MarinoArm.py')  # make sure runSim is set to True
     dataIn = ThrowData()
     fileIn = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\DataFromCSharp.json"
     dataIn.readfile(fileIn)
@@ -31,7 +34,7 @@ print("Done")
 
 # Plotting Results
 if 1 == 1:
-    file_tdr = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Python\\TrialDataRecord.json"
+    file_tdr = "C:\\Users\\gardn\\source\\repos\\MarinoArm\\Json\\temp\\TrialDataRecord.json"
     tdr = TrialDataRecord()
     tdr.readfile(file_tdr)
     # plt.clf()

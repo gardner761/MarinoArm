@@ -481,14 +481,14 @@ namespace SerialLibrary
             double Kol = 165.0;
             double outMin = 80;
             double outMax = 200;
-            int output = (int)(outMin + (Kol - outMin) * Math.Sin(ref_deg * 3.1416 / 180.0) - 5);
+            int output = (int)Math.Round(outMin + (Kol - outMin) * Math.Sin(ref_deg * 3.1416 / 180.0) - 5);
             if (output < outMin & output >=0)
             {
-                return (int)outMin;
+                return (int)Math.Round(outMin);
             }
             else if (output > outMax)
             {
-                return (int)outMax;
+                return (int)Math.Round(outMax);
             }
             else
             {

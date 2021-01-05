@@ -44,13 +44,13 @@ namespace ArmLibrary
 
         #endregion
 
-            #region Methods
+        #region Methods
 
-            /// <summary>
+        /// <summary>
             /// Sets the trial number to zero, sets the sampling frequency, and Initializes the Json file to be used by Python for the first throw
             /// </summary>
             /// <param name="path"></param>
-            public void WriteFirstThrowDataToJson(string path, float[] time)
+        public void WriteFirstThrowDataToJson(string path, float[] time)
         {
             Data.TrialNumber = 0;
             Data.ArraySize = GlobalVariables.ARRAY_SIZE;

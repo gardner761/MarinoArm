@@ -697,3 +697,6 @@ Version.cpp
 /C++/MarinoArm/__vm
 /C++/MarinoArm/MarinoArm.vcxproj
 /C++/MarinoArm/MarinoArm.vcxproj.filters
+/White Papers
+/Python/Test Scripts/FloatIntTest.py
+/Python/DataFromCSharp.json

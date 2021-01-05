@@ -512,7 +512,7 @@ int GetZeroReading(int pin)
     sumDeg += analogRead(pin);
     delay(5);
   }
-  output = float(sumDeg) / float(LENGTH_OF_ARRAY);
+  output = round(float(sumDeg) / float(LENGTH_OF_ARRAY));
   return output;
 }
 
